@@ -191,6 +191,8 @@ bool KateDocManager::closeDocuments(const QList<KTextEditor::Document *> documen
     saveMetaInfos(documents);
 
     Q_EMIT aboutToDeleteDocuments(QList<KTextEditor::Document *>{documents.begin(), documents.end()});
+    bool shutdownKate =
+        KateApp::self()->activeKateMainWindow()->modCloseAfterLast() && KateApp::self()->documentManager()->documentList().size() == documents.size();
 
     int last = 0;
     bool success = true;
@@ -211,6 +213,12 @@ bool KateDocManager::closeDocuments(const QList<KTextEditor::Document *> documen
         Q_EMIT documentDeleted(doc);
 
         last++;
+    }
+
+    if (success && shutdownKate) {
+        QTimer::singleShot(0, []() {
+            KateApp::self()->shutdownKate(KateApp::self()->activeKateMainWindow());
+        });
     }
 
     /**
