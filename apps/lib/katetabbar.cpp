@@ -26,6 +26,93 @@
 #include <KSharedConfig>
 
 #include <KTextEditor/Document>
+#include <kcolorscheme.h>
+
+namespace
+{
+class CloseButton : public QAbstractButton
+{
+    Q_OBJECT
+public:
+    explicit CloseButton(QWidget *parent);
+    QSize sizeHint() const override
+    {
+        ensurePolished();
+        int width = style()->pixelMetric(QStyle::PM_TabCloseIndicatorWidth, nullptr, this);
+        int height = style()->pixelMetric(QStyle::PM_TabCloseIndicatorHeight, nullptr, this);
+        return QSize(width, height);
+    }
+
+    QSize minimumSizeHint() const override
+    {
+        return sizeHint();
+    }
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    void enterEvent(QEvent *event) override
+#else
+    void enterEvent(QEnterEvent *event) override
+#endif
+    {
+        if (isEnabled())
+            update();
+        QAbstractButton::enterEvent(event);
+    }
+    void leaveEvent(QEvent *event) override
+    {
+        if (isEnabled())
+            update();
+        QAbstractButton::leaveEvent(event);
+    }
+
+    void paintEvent(QPaintEvent *event) override;
+};
+}
+
+CloseButton::CloseButton(QWidget *parent)
+    : QAbstractButton(parent)
+{
+    setFocusPolicy(Qt::NoFocus);
+    setCursor(Qt::ArrowCursor);
+    setToolTip(tr("Close Tab"));
+    resize(sizeHint());
+}
+
+void CloseButton::paintEvent(QPaintEvent *)
+{
+    QPainter p(this);
+    QStyleOption opt;
+    opt.initFrom(this);
+    opt.state |= QStyle::State_AutoRaise;
+    if (isEnabled() && underMouse() && !isChecked() && !isDown())
+        opt.state |= QStyle::State_Raised;
+    if (isChecked())
+        opt.state |= QStyle::State_On;
+    if (isDown())
+        opt.state |= QStyle::State_Sunken;
+    if (const QTabBar *tb = qobject_cast<const QTabBar *>(parent())) {
+        int index = tb->currentIndex();
+        QTabBar::ButtonPosition position = (QTabBar::ButtonPosition)style()->styleHint(QStyle::SH_TabBar_CloseButtonPosition, nullptr, tb);
+        if (tb->tabButton(index, position) == this)
+            opt.state |= QStyle::State_Selected;
+    }
+
+    if (KateTabBar *tb = qobject_cast<KateTabBar *>(parent())) {
+        int index = tb->tabAt(pos());
+        auto doc = tb->tabDocument(index);
+        if (doc && doc->isModified()) {
+            p.setRenderHint(QPainter::Antialiasing, true);
+            p.setBrush(opt.palette.windowText());
+            QRect rect = opt.rect;
+            rect.setSize(opt.rect.size() * 0.6);
+            rect.moveCenter(opt.rect.center());
+            p.drawEllipse(rect);
+            return;
+        }
+    }
+
+    style()->drawPrimitive(QStyle::PE_IndicatorTabClose, &opt, &p, this);
+}
 
 struct KateTabButtonData {
     KTextEditor::Document *doc = nullptr;
@@ -52,6 +139,9 @@ KateTabBar::KateTabBar(QWidget *parent)
 
     // allow users to re-arrange the tabs
     setMovable(true);
+
+    // We have custom tab close handling
+    setTabsClosable(false);
 
     // enforce configured limit
     readConfig();
@@ -93,11 +183,55 @@ void KateTabBar::readConfig()
 
     // handle tab close button and expansion
     setExpanding(cgGeneral.readEntry("Expand Tabs", false));
-    setTabsClosable(cgGeneral.readEntry("Show Tabs Close Button", true));
+    setTabsAreCloseable(cgGeneral.readEntry("Show Tabs Close Button", true));
 
     // get mouse click rules
     m_doubleClickNewDocument = cgGeneral.readEntry("Tab Double Click New Document", true);
     m_middleClickCloseDocument = cgGeneral.readEntry("Tab Middle Click Close Document", true);
+}
+
+void KateTabBar::setTabsAreCloseable(bool closeable)
+{
+    if (closeable == m_tabsCloseable)
+        return;
+    m_tabsCloseable = closeable;
+
+    ButtonPosition closeSide = (ButtonPosition)style()->styleHint(QStyle::SH_TabBar_CloseButtonPosition, nullptr, this);
+    if (closeable) {
+        for (int i = 0; i < count(); ++i) {
+            auto *closeButton = new CloseButton(this);
+            connect(closeButton, &CloseButton::clicked, this, &KateTabBar::slotCloseTab);
+            setTabButton(i, closeSide, closeButton);
+        }
+    } else {
+        for (int i = 0; i < count(); ++i) {
+            if (auto btn = tabButton(i, closeSide)) {
+                btn->deleteLater();
+                setTabButton(i, closeSide, nullptr);
+            }
+        }
+    }
+    update();
+}
+
+bool KateTabBar::areTabsCloseable() const
+{
+    return m_tabsCloseable;
+}
+
+void KateTabBar::onDocumentModified(KTextEditor::Document *doc)
+{
+    auto idx = documentIdx(doc);
+    if (idx >= 0 && doc->isModified() && !areTabsCloseable()) {
+        auto tabText = this->tabText(idx);
+        tabText.append(QStringLiteral(" *"));
+        setTabText(idx, tabText);
+    } else {
+        ButtonPosition closeSide = (ButtonPosition)style()->styleHint(QStyle::SH_TabBar_CloseButtonPosition, nullptr, this);
+        if (auto b = tabButton(idx, closeSide)) {
+            b->update();
+        }
+    }
 }
 
 std::vector<int> KateTabBar::documentTabIndexes() const
@@ -165,7 +299,6 @@ void KateTabBar::mousePressEvent(QMouseEvent *event)
     if (!isActive()) {
         Q_EMIT activateViewSpaceRequested();
     }
-    m_dragInProgress = false;
 
     if (event->button() == Qt::LeftButton && tabAt(event->pos()) != -1) {
         dragStartPos = event->pos();
@@ -184,12 +317,6 @@ void KateTabBar::mousePressEvent(QMouseEvent *event)
     }
 }
 
-void KateTabBar::mouseReleaseEvent(QMouseEvent *e)
-{
-    m_dragInProgress = false;
-    QTabBar::mouseReleaseEvent(e);
-}
-
 void KateTabBar::mouseMoveEvent(QMouseEvent *event)
 {
     if (dragStartPos.isNull()) {
@@ -203,7 +330,6 @@ void KateTabBar::mouseMoveEvent(QMouseEvent *event)
     }
 
     if (rect().contains(event->pos())) {
-        m_dragInProgress = true;
         return QTabBar::mouseMoveEvent(event);
     }
 
@@ -286,51 +412,6 @@ void KateTabBar::wheelEvent(QWheelEvent *event)
     setCurrentIndex(idx);
 }
 
-void KateTabBar::paintEvent(QPaintEvent *e)
-{
-    if (m_dragInProgress) {
-        QTabBar::paintEvent(e);
-        return;
-    }
-
-    QStylePainter painter(this);
-
-    if (drawBase()) {
-        QStyleOptionTabBarBase opt;
-        opt.initFrom(this);
-        opt.documentMode = true;
-        opt.shape = shape();
-        for (int i = 0; i < count(); ++i) {
-            opt.tabBarRect |= tabRect(i);
-        }
-        QStyleOptionTab tabOverlap;
-        tabOverlap.shape = shape();
-        int overlap = style()->pixelMetric(QStyle::PM_TabBarBaseOverlap, &tabOverlap, this);
-        opt.rect.setRect(0, size().height() - overlap, size().width(), overlap);
-        painter.drawPrimitive(QStyle::PE_FrameTabBarBase, opt);
-    }
-
-    const int closeBtnWidth = style()->pixelMetric(QStyle::PM_TabCloseIndicatorWidth, nullptr, this);
-    for (int i = 0; i < count(); i++) {
-        QStyleOptionTab opt;
-        initStyleOption(&opt, i);
-        opt.palette.setColor(QPalette::Button, Qt::red);
-        painter.drawControl(QStyle::CE_TabBarTabShape, opt);
-        QFont original = painter.font();
-        QRect r = tabRect(i);
-        r.adjust(-closeBtnWidth, 0, 0, 0);
-        if (tabDocument(i) && tabDocument(i)->isModified()) {
-            // move it back slightly so the text doesn't jump
-            auto original = painter.font();
-            auto copy = original;
-            copy.setItalic(true);
-            painter.setFont(copy);
-        }
-        painter.drawText(r, Qt::AlignCenter, tabText(i));
-        painter.setFont(original);
-    }
-}
-
 void KateTabBar::setTabDocument(int idx, KTextEditor::Document *doc)
 {
     QVariant data = ensureValidTabData(idx);
@@ -396,6 +477,28 @@ void KateTabBar::setCurrentDocument(KTextEditor::Document *doc)
     // replace it's data + set it as active
     setTabDocument(indexToReplace, doc);
     setCurrentIndex(indexToReplace);
+}
+
+void KateTabBar::slotCloseTab()
+{
+    QObject *object = sender();
+    int tabToClose = -1;
+    QTabBar::ButtonPosition closeSide = (QTabBar::ButtonPosition)style()->styleHint(QStyle::SH_TabBar_CloseButtonPosition, nullptr, this);
+    for (int i = 0; i < count(); ++i) {
+        if (closeSide == QTabBar::LeftSide) {
+            if (tabButton(i, closeSide) == object) {
+                tabToClose = i;
+                break;
+            }
+        } else {
+            if (tabButton(i, closeSide) == object) {
+                tabToClose = i;
+                break;
+            }
+        }
+    }
+    if (tabToClose != -1)
+        Q_EMIT tabCloseRequested(tabToClose);
 }
 
 void KateTabBar::removeDocument(KTextEditor::Document *doc)
@@ -486,6 +589,14 @@ void KateTabBar::tabInserted(int idx)
     if (m_beingAdded) {
         setTabDocument(idx, m_beingAdded);
     }
+
+    if (areTabsCloseable()) {
+        ButtonPosition closeSide = (ButtonPosition)style()->styleHint(QStyle::SH_TabBar_CloseButtonPosition, nullptr, this);
+        auto btn = new CloseButton(this);
+        connect(btn, &CloseButton::clicked, this, &KateTabBar::slotCloseTab);
+        setTabButton(idx, closeSide, btn);
+    }
+
     m_beingAdded = nullptr;
 }
 
@@ -509,3 +620,5 @@ void KateTabBar::setCurrentWidget(QWidget *widget)
     setTabData(idx, QVariant::fromValue(widget));
     setCurrentIndex(idx);
 }
+
+#include "katetabbar.moc"

@@ -65,6 +65,8 @@ public:
     KTextEditor::Document *tabDocument(int idx);
     void removeDocument(KTextEditor::Document *doc);
 
+    void slotCloseTab();
+
     /**
      * Marks this tabbar as active. That is, current-tab indicators are
      * properly highlighted, indicating that child widgets of this tabbar
@@ -90,6 +92,10 @@ public:
      * Add an "extra" widget to the tab bar which is not a "KTextEditor::View"
      */
     void setCurrentWidget(QWidget *widget);
+
+    bool areTabsCloseable() const;
+
+    void onDocumentModified(KTextEditor::Document *doc);
 
 Q_SIGNALS:
     /**
@@ -129,13 +135,10 @@ protected:
     //! Cycle through tabs
     void wheelEvent(QWheelEvent *event) override;
 
-    void paintEvent(QPaintEvent *) override;
-
-    void mouseReleaseEvent(QMouseEvent *e) override;
-
 private:
     using QTabBar::addTab;
     using QTabBar::insertTab;
+    void setTabsAreCloseable(bool closeable);
 
     /**
      * Indexes of tabs which are a normal KTextEditor::View
@@ -174,8 +177,7 @@ private:
     std::unordered_map<KTextEditor::Document *, std::pair<quint64, bool>> m_docToLruCounterAndHasTab;
 
     QPoint dragStartPos;
-
-    bool m_dragInProgress = false;
+    bool m_tabsCloseable = true;
 };
 
 #endif // KATE_TAB_BAR_H

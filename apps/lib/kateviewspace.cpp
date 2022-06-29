@@ -516,12 +516,7 @@ void KateViewSpace::registerDocument(KTextEditor::Document *doc)
      */
     connect(doc, &KTextEditor::Document::documentNameChanged, this, &KateViewSpace::updateDocumentName);
     connect(doc, &KTextEditor::Document::documentUrlChanged, this, &KateViewSpace::updateDocumentUrl);
-    connect(doc, &KTextEditor::Document::modifiedChanged, this, [this](KTextEditor::Document *doc) {
-        int tab = m_tabBar->documentIdx(doc);
-        if (tab >= 0) {
-            m_tabBar->update(m_tabBar->tabRect(tab));
-        }
-    });
+    connect(doc, &KTextEditor::Document::modifiedChanged, m_tabBar, &KateTabBar::onDocumentModified);
 
     /**
      * allow signals again, now that the tab is there
