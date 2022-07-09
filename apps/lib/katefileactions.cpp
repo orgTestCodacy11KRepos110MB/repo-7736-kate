@@ -13,13 +13,16 @@
 #include <ktexteditor/document.h>
 #include <ktexteditor/editor.h>
 
+#include <KIO/ApplicationLauncherJob>
 #include <KIO/CopyJob>
 #include <KIO/DeleteJob>
+#include <KIO/JobUiDelegate>
 #include <KIO/OpenFileManagerWindowJob>
 #include <KJobWidgets>
 #include <KLocalizedString>
 #include <KMessageBox>
 #include <KPropertiesDialog>
+#include <KService>
 
 #include <QApplication>
 #include <QClipboard>
@@ -150,23 +153,43 @@ void KateFileActions::deleteDocumentFile(QWidget *parent, KTextEditor::Document 
     }
 }
 
-QVector<std::pair<QString, QString>> KateFileActions::supportedDiffTools()
+QVector<KService::Ptr> KateFileActions::supportedDiffTools()
 {
-    // query once if the tools are there in the path and store that
-    // we will disable the actions for the tools not found
-    static QVector<std::pair<QString, QString>> resultList{{QStringLiteral("kdiff3"), safeExecutableName(QStringLiteral("kdiff3"))},
-                                                           {QStringLiteral("kompare"), safeExecutableName(QStringLiteral("kompare"))},
-                                                           {QStringLiteral("meld"), safeExecutableName(QStringLiteral("meld"))}};
-    return resultList;
+    // query once if the tools are there and store that
+    static QVector<KService::Ptr> tools = [] {
+        QVector<KService::Ptr> resultList;
+
+        const KService::Ptr kdiff3 = KService::serviceByDesktopName(QStringLiteral("org.kde.kdiff3"));
+
+        if (kdiff3) {
+            resultList << kdiff3;
+        }
+
+        const KService::Ptr kompare = KService::serviceByDesktopName(QStringLiteral("org.kde.kompare"));
+
+        if (kompare) {
+            resultList << kompare;
+        }
+
+        const KService::Ptr meld = KService::serviceByDesktopName(QStringLiteral("org.gnome.Meld"));
+
+        if (meld) {
+            resultList << meld;
+        }
+        return resultList;
+    }();
+
+    return tools;
 }
 
-bool KateFileActions::compareWithExternalProgram(KTextEditor::Document *documentA, KTextEditor::Document *documentB, const QString &diffExecutable)
+void KateFileActions::compareWithExternalProgram(KTextEditor::Document *documentA, KTextEditor::Document *documentB, KService::Ptr service)
 {
     Q_ASSERT(documentA);
     Q_ASSERT(documentB);
 
-    QProcess process;
-    QStringList arguments;
-    arguments << documentA->url().toLocalFile() << documentB->url().toLocalFile();
-    return process.startDetached(diffExecutable, arguments);
+    auto *job = new KIO::ApplicationLauncherJob(service);
+    job->setUrls({documentA->url(), documentB->url()});
+    job->setUiDelegate(new KIO::JobUiDelegate);
+
+    job->start();
 }

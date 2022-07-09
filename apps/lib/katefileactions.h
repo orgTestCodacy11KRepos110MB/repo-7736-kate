@@ -13,6 +13,8 @@
 
 #include <QString>
 
+#include <KService>
+
 class QWidget;
 namespace KTextEditor
 {
@@ -53,7 +55,7 @@ void deleteDocumentFile(QWidget *parent, KTextEditor::Document *document);
 /**
  * @returns a list of supported diff tools (names of the executables + paths to them, empty if not found in PATH)
  */
-QVector<std::pair<QString, QString>> supportedDiffTools();
+QVector<KService::Ptr> supportedDiffTools();
 
 /**
  * Runs an external program to compare the underlying files of two given documents.
@@ -71,7 +73,7 @@ QVector<std::pair<QString, QString>> supportedDiffTools();
  *
  * IDEA for later: compare with unsaved buffer data instead of underlying file
  */
-bool compareWithExternalProgram(KTextEditor::Document *documentA, KTextEditor::Document *documentB, const QString &diffExecutable);
+void compareWithExternalProgram(KTextEditor::Document *documentA, KTextEditor::Document *documentB, KService::Ptr service);
 }
 
 #endif

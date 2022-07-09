@@ -23,6 +23,7 @@
 #include <KAcceleratorManager>
 #include <KConfigGroup>
 #include <KLocalizedString>
+#include <KService>
 #include <KSharedConfig>
 
 #include <QApplication>
@@ -935,12 +936,13 @@ void KateViewSpace::showContextMenu(int idx, const QPoint &globalPos)
     }
 
     if (mCompareWithActive->isEnabled()) {
-        for (auto &&diffTool : KateFileActions::supportedDiffTools()) {
-            QAction *compareAction = mCompareWithActive->addAction(diffTool.first);
+        for (KService::Ptr &diffTool : KateFileActions::supportedDiffTools()) {
+            QAction *compareAction = mCompareWithActive->addAction(diffTool->name());
+            compareAction->setIcon(QIcon::fromTheme(diffTool->icon()));
 
-            // we use the full path to safely execute the tool, disable action if no full path => tool not found
-            compareAction->setData(diffTool.second);
-            compareAction->setEnabled(!diffTool.second.isEmpty());
+            connect(compareAction, &QAction::triggered, this, [diffTool, activeDocument, doc] {
+                KateFileActions::compareWithExternalProgram(activeDocument, doc, diffTool);
+            });
         }
     }
 
@@ -967,14 +969,6 @@ void KateViewSpace::showContextMenu(int idx, const QPoint &globalPos)
         KateFileActions::renameDocumentFile(this, doc);
     } else if (choice == aDeleteFile) {
         KateFileActions::deleteDocumentFile(this, doc);
-    } else if (choice->parent() == mCompareWithActive) {
-        QString actionData = choice->data().toString(); // name of the executable of the diff program
-        if (!KateFileActions::compareWithExternalProgram(activeDocument, doc, actionData)) {
-            QMessageBox::information(this,
-                                     i18n("Could not start program"),
-                                     i18n("The selected program could not be started. Maybe it is not installed."),
-                                     QMessageBox::StandardButton::Ok);
-        }
     }
 }
 
