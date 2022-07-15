@@ -61,9 +61,6 @@
       <DefineGroup name="edit_goto"/>
       <DefineGroup name="switch_document"/>
       <Separator/>
-      <Action name="view_next_tab"/>
-      <Action name="view_prev_tab"/>
-      <Separator/>
       <Action name="view_history_back" />
       <Action name="view_history_forward" />
       <Separator/>

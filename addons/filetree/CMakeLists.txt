@@ -27,7 +27,6 @@ target_sources(
     katefiletreeplugin.cpp
     katefiletreepluginsettings.cpp
     katefiletreeproxymodel.cpp
-    plugin.qrc
 )
 
 

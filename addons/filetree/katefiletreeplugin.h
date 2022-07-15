@@ -133,8 +133,6 @@ private Q_SLOTS:
     void viewModeChanged(bool);
     void sortRoleChanged(int);
     void slotDocumentsCreated();
-    void slotDocumentSave() const;
-    void slotDocumentSaveAs() const;
 };
 
 #endif // KATE_FILETREE_PLUGIN_H

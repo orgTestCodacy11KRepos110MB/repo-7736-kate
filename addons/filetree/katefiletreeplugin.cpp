@@ -128,7 +128,6 @@ KateFileTreePluginView::KateFileTreePluginView(KTextEditor::MainWindow *mainWind
     , m_mainWindow(mainWindow)
 {
     KXMLGUIClient::setComponentName(QStringLiteral("katefiletree"), i18n("Kate File Tree"));
-    setXMLFile(QStringLiteral("ui.rc"));
 
     m_toolView = mainWindow->createToolView(plug,
                                             QStringLiteral("kate_private_plugin_katefiletreeplugin"),
@@ -251,14 +250,6 @@ void KateFileTreePluginView::setupActions()
     aShowActive->setIcon(QIcon::fromTheme(QStringLiteral("folder-sync")));
     connect(aShowActive, &QAction::triggered, this, &KateFileTreePluginView::showActiveDocument);
 
-    auto aSave = actionCollection()->addAction(QStringLiteral("filetree_save"), this, SLOT(slotDocumentSave()));
-    aSave->setToolTip(i18n("Save the current document"));
-    aSave->setIcon(QIcon::fromTheme(QStringLiteral("document-save")));
-
-    auto aSaveAs = actionCollection()->addAction(QStringLiteral("filetree_save_as"), this, SLOT(slotDocumentSaveAs()));
-    aSaveAs->setToolTip(i18n("Save current document under new name"));
-    aSaveAs->setIcon(QIcon::fromTheme(QStringLiteral("document-save-as")));
-
     /**
      * add new & open, if hosting application has it
      */
@@ -283,8 +274,7 @@ void KateFileTreePluginView::setupActions()
     m_toolbar->addAction(aPrev);
     m_toolbar->addAction(aNext);
     m_toolbar->addSeparator();
-    m_toolbar->addAction(aSave);
-    m_toolbar->addAction(aSaveAs);
+    m_toolbar->addAction(aShowActive);
 }
 
 KateFileTreeModel *KateFileTreePluginView::model() const
@@ -443,20 +433,6 @@ void KateFileTreePluginView::slotDocumentsCreated()
     m_documentModel->documentsOpened(m_documentsCreated);
     m_documentsCreated.clear();
     viewChanged();
-}
-
-void KateFileTreePluginView::slotDocumentSave() const
-{
-    if (auto view = m_mainWindow->activeView()) {
-        view->document()->documentSave();
-    }
-}
-
-void KateFileTreePluginView::slotDocumentSaveAs() const
-{
-    if (auto view = m_mainWindow->activeView()) {
-        view->document()->documentSaveAs();
-    }
 }
 
 // END KateFileTreePluginView
