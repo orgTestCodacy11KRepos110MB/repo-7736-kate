@@ -42,6 +42,8 @@ public:
     bool showCloseButton() const;
     void setShowCloseButton(bool);
 
+    int &timesGoneUpDown();
+
 private:
     KConfigGroup m_group;
 
@@ -55,6 +57,8 @@ private:
     bool m_showFullPathOnRoots;
     bool m_showToolbar;
     bool m_showCloseButton;
+
+    int m_timesGoneUpDown;
 };
 
 #endif // KATE_FILETREE_PLUGIN_H

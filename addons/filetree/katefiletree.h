@@ -20,13 +20,14 @@ class QActionGroup;
 
 class KateFileTreeModel;
 class KateFileTreeProxyModel;
+class KateFileTreePlugin;
 
 class KateFileTree : public QTreeView
 {
     Q_OBJECT
 
 public:
-    KateFileTree(QWidget *parent);
+    KateFileTree(KateFileTreePlugin *settings, QWidget *parent);
     ~KateFileTree() override;
 
     void setModel(QAbstractItemModel *model) override;
@@ -114,6 +115,8 @@ private:
     KateFileTreeModel *m_sourceModel = nullptr;
     QPersistentModelIndex m_previouslySelected;
     QPersistentModelIndex m_indexContextMenu;
+
+    KateFileTreePlugin *m_plugin;
 
     bool m_hasCloseButton = false;
 };

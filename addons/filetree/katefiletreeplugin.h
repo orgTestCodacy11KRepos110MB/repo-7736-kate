@@ -44,7 +44,7 @@ public:
     int configPages() const override;
     KTextEditor::ConfigPage *configPage(int number = 0, QWidget *parent = nullptr) override;
 
-    const KateFileTreePluginSettings &settings();
+    KateFileTreePluginSettings &settings();
 
     void applyConfig(bool shadingEnabled,
                      const QColor &viewShade,

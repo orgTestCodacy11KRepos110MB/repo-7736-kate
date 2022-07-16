@@ -10,6 +10,7 @@
 
 #include "katefiletreedebug.h"
 #include "katefiletreemodel.h"
+#include "katefiletreeplugin.h"
 #include "katefiletreeproxymodel.h"
 
 #include <ktexteditor/application.h>
@@ -37,6 +38,7 @@
 #include <QMenu>
 #include <QMimeDatabase>
 #include <QStyledItemDelegate>
+#include <QToolTip>
 // END Includes
 
 static KTextEditor::Document *docFromIndex(const QModelIndex &index)
@@ -89,8 +91,9 @@ private:
 
 // BEGIN KateFileTree
 
-KateFileTree::KateFileTree(QWidget *parent)
+KateFileTree::KateFileTree(KateFileTreePlugin *plugin, QWidget *parent)
     : QTreeView(parent)
+    , m_plugin(plugin)
 {
     setAcceptDrops(false);
     setIndentation(12);
@@ -289,11 +292,36 @@ void KateFileTree::slotSortOpeningOrder()
     Q_EMIT sortRoleChanged(KateFileTreeModel::OpeningOrderRole);
 }
 
+static bool notifiyingTime(int count)
+{
+    switch (count) {
+    case 3:
+    case 5:
+    case 11:
+    case 22:
+    case 43:
+        return true;
+    default:
+        return false;
+    }
+}
+
 void KateFileTree::slotCurrentChanged(const QModelIndex &current, const QModelIndex &previous)
 {
-    Q_UNUSED(previous);
     if (!current.isValid()) {
         return;
+    }
+
+    if (std::abs(previous.row() - current.row()) == 1) {
+        m_plugin->settings().timesGoneUpDown()++;
+
+        if (notifiyingTime(m_plugin->settings().timesGoneUpDown())) {
+            const auto helpfulText = i18n("Did you know? You can use %1 and %2 to view the file above or below the active file in the list.",
+                                          QStringLiteral("Alt+Up"),
+                                          QStringLiteral("Alt+Down"));
+
+            QToolTip::showText(mapToGlobal(pos()), helpfulText, this, {}, 5000);
+        }
     }
 
     KTextEditor::Document *doc = m_proxyModel->docFromIndex(current);

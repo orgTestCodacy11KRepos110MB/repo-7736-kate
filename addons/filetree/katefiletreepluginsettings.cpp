@@ -29,6 +29,8 @@ KateFileTreePluginSettings::KateFileTreePluginSettings()
     m_showToolbar = m_group.readEntry("showToolbar", true);
 
     m_showCloseButton = m_group.readEntry("showCloseButton", false);
+
+    m_timesGoneUpDown = m_group.readEntry("timesGoneUpDown", 0);
 }
 
 void KateFileTreePluginSettings::save()
@@ -41,6 +43,7 @@ void KateFileTreePluginSettings::save()
     m_group.writeEntry("showFullPathOnRoots", m_showFullPathOnRoots);
     m_group.writeEntry("showToolbar", m_showToolbar);
     m_group.writeEntry("showCloseButton", m_showCloseButton);
+    m_group.writeEntry("timesGoneUpDown", m_timesGoneUpDown);
 
     m_group.sync();
 }
@@ -123,4 +126,9 @@ bool KateFileTreePluginSettings::showCloseButton() const
 void KateFileTreePluginSettings::setShowCloseButton(bool s)
 {
     m_showCloseButton = s;
+}
+
+int &KateFileTreePluginSettings::timesGoneUpDown()
+{
+    return m_timesGoneUpDown;
 }
