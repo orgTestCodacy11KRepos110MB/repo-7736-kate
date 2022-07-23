@@ -35,6 +35,11 @@ include(ECMDeprecationSettings)
 
 include(FeatureSummary)
 
+option(BUILD_SPLIT_FROM_SOURCE "This will build kateprivate as a static library" OFF)
+set(KATEPRIVATE_LIB_MODE "SHARED")
+if(BUILD_SPLIT_FROM_SOURCE)
+    set(KATEPRIVATE_LIB_MODE "STATIC")
+endif()
 
 ecm_set_disabled_deprecation_versions(
     QT 5.15

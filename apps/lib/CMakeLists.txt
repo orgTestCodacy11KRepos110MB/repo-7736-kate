@@ -1,7 +1,9 @@
 # Kate shared library, used by Kate/KWrite and the addons
-add_library(kateprivate SHARED "")
+add_library(kateprivate ${KATEPRIVATE_LIB_MODE} "")
 set_target_properties(kateprivate PROPERTIES VERSION ${RELEASE_SERVICE_VERSION})
-install(TARGETS kateprivate ${KDE_INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
+if(NOT BUILD_SPLIT_FROM_SOURCE)
+  install(TARGETS kateprivate ${KDE_INSTALL_TARGETS_DEFAULT_ARGS} LIBRARY NAMELINK_SKIP)
+endif()
 
 # ensure right translations domain, we use one kate.po(t) for lib + apps
 target_compile_definitions(kateprivate PRIVATE TRANSLATION_DOMAIN="kate")
