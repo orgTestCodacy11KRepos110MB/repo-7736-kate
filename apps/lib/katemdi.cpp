@@ -1241,8 +1241,8 @@ bool MainWindow::hideToolView(ToolView *widget)
 
 void MainWindow::hideToolViews()
 {
-    for (const auto &tv : m_toolviews) {
-        if (tv) {
+    for (auto *tv : m_toolviews) {
+        if (tv && tv->isVisible()) {
             tv->sidebar()->hideWidget(tv);
         }
     }
