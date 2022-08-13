@@ -34,6 +34,20 @@
 
 #include <array>
 
+struct SideBarInfo {
+    KMultiTabBar::KMultiTabBarPosition side;
+    const char *name = nullptr;
+    const char *icon = nullptr;
+    const char *toggleActionId = nullptr;
+    const char *toggleActionText = nullptr;
+};
+static std::array<SideBarInfo, 4> s_sideBarInfo = {{
+    {KMultiTabBar::Left, "Left Sidebar", "go-previous", "kate_mdi_toggle_left_toolviews", "Toggle Left Tool Views"},
+    {KMultiTabBar::Right, "Right Sidebar", "go-next", "kate_mdi_toggle_right_toolviews", "Toggle Right Tool Views"},
+    {KMultiTabBar::Top, "Top Sidebar", "go-up", "kate_mdi_toggle_top_toolviews", "Toggle Top Tool Views"},
+    {KMultiTabBar::Bottom, "Bottom Sidebar", "go-down", "kate_mdi_toggle_bottom_toolviews", "Toggle Bottom Tool Views"},
+}};
+
 namespace KateMDI
 {
 // BEGIN TOGGLETOOLVIEWACTION
@@ -135,23 +149,11 @@ GUIClient::GUIClient(MainWindow *mw)
 
 void GUIClient::setupToggleToolViewsActions()
 {
-    struct ToggleInfo {
-        KMultiTabBar::KMultiTabBarPosition side;
-        const char *actionId = nullptr;
-        const char *text = nullptr;
-    };
-    static const std::array<ToggleInfo, 4> toggleActions = {{
-        {KMultiTabBar::Left, "kate_mdi_toggle_left_toolviews", "Toggle Left Tool Views"},
-        {KMultiTabBar::Right, "kate_mdi_toggle_right_toolviews", "Toggle Right Tool Views"},
-        {KMultiTabBar::Top, "kate_mdi_toggle_top_toolviews", "Toggle Top Tool Views"},
-        {KMultiTabBar::Bottom, "kate_mdi_toggle_bottom_toolviews", "Toggle Bottom Tool Views"},
-    }};
-
-    for (const auto &toggle : toggleActions) {
-        QAction *act = actionCollection()->addAction(QLatin1String(toggle.actionId), m_mw, [this, toggle]() {
-            m_mw->toggleToolViews(toggle.side);
+    for (const auto &s : s_sideBarInfo) {
+        QAction *act = actionCollection()->addAction(QLatin1String(s.toggleActionId), m_mw, [this, s]() {
+            m_mw->toggleToolViews(s.side);
         });
-        act->setText(i18n(toggle.text));
+        act->setText(i18n(s.toggleActionText));
     }
 }
 
@@ -770,25 +772,13 @@ void Sidebar::tabClicked(int i)
 
 static void addMoveActions(QMenu &menu, KMultiTabBar::KMultiTabBarPosition position)
 {
-    struct ActionInfo {
-        KMultiTabBar::KMultiTabBarPosition pos;
-        const char *icon;
-        const char *text;
-    };
-    static const std::array<ActionInfo, 4> actionInfo = {{
-        {KMultiTabBar::Left, "go-previous", "Left Sidebar"},
-        {KMultiTabBar::Right, "go-next", "Right Sidebar"},
-        {KMultiTabBar::Top, "go-up", "Top Sidebar"},
-        {KMultiTabBar::Bottom, "go-down", "Bottom Sidebar"},
-    }};
-
     menu.addSection(QIcon::fromTheme(QStringLiteral("move")), i18n("Move To"));
 
-    for (const auto &info : actionInfo) {
-        if (info.pos == position) {
+    for (const auto &info : s_sideBarInfo) {
+        if (info.side == position) {
             continue;
         }
-        menu.addAction(QIcon::fromTheme(QLatin1String(info.icon)), i18n(info.text))->setData(info.pos);
+        menu.addAction(QIcon::fromTheme(QLatin1String(info.icon)), i18n(info.name))->setData(info.side);
     }
 }
 
