@@ -35,6 +35,20 @@
 
 #include <array>
 
+struct SideBarInfo {
+    KMultiTabBar::KMultiTabBarPosition side;
+    const char *name = nullptr;
+    const char *icon = nullptr;
+    const char *toggleActionId = nullptr;
+    const char *toggleActionText = nullptr;
+};
+static std::array<SideBarInfo, 4> s_sideBarInfo = {{
+    {KMultiTabBar::Left, "Left Sidebar", "go-previous", "kate_mdi_toggle_left_toolviews", "Toggle Left Tool Views"},
+    {KMultiTabBar::Right, "Right Sidebar", "go-next", "kate_mdi_toggle_right_toolviews", "Toggle Right Tool Views"},
+    {KMultiTabBar::Top, "Top Sidebar", "go-up", "kate_mdi_toggle_top_toolviews", "Toggle Top Tool Views"},
+    {KMultiTabBar::Bottom, "Bottom Sidebar", "go-down", "kate_mdi_toggle_bottom_toolviews", "Toggle Bottom Tool Views"},
+}};
+
 namespace KateMDI
 {
 // BEGIN TOGGLETOOLVIEWACTION
@@ -114,6 +128,8 @@ GUIClient::GUIClient(MainWindow *mw)
     m_hideToolViews = actionCollection()->addAction(QStringLiteral("kate_mdi_hide_toolviews"), m_mw, &MainWindow::hideToolViews);
     m_hideToolViews->setText(i18n("Hide All Tool Views"));
 
+    setupToggleToolViewsActions();
+
     m_toolMenu->addAction(m_showSidebarsAction);
     m_toolMenu->addAction(m_hideToolViews);
     QAction *sep_act = new QAction(this);
@@ -133,6 +149,16 @@ GUIClient::GUIClient(MainWindow *mw)
     // hide tool views menu for KWrite mode
     if (KateApp::isKWrite()) {
         m_toolMenu->setVisible(false);
+    }
+}
+
+void GUIClient::setupToggleToolViewsActions()
+{
+    for (const auto &s : s_sideBarInfo) {
+        QAction *act = actionCollection()->addAction(QLatin1String(s.toggleActionId), m_mw, [this, s]() {
+            m_mw->toggleToolViews(s.side);
+        });
+        act->setText(i18n(s.toggleActionText));
     }
 }
 
@@ -1074,6 +1100,34 @@ void Sidebar::setVisible(bool visible)
     QWidget::setVisible(visible);
 }
 
+void Sidebar::addToToggled(ToolView *tv)
+{
+    auto it = std::find(m_toggledTools.begin(), m_toggledTools.end(), tv);
+    if (it == m_toggledTools.end()) {
+        m_toggledTools.push_back(tv);
+    }
+}
+
+void Sidebar::toggleToolViews()
+{
+    if (!m_toggledTools.empty()) {
+        for (auto *tv : m_toggledTools) {
+            if (tv) {
+                showWidget(tv);
+            }
+        }
+        m_toggledTools.clear();
+        return;
+    }
+
+    for (auto *tv : m_toolviews) {
+        if (tv->isVisible()) {
+            hideWidget(tv);
+            addToToggled(tv);
+        }
+    }
+}
+
 void Sidebar::buttonPopupActivate(QAction *a)
 {
     const int id = a->data().toInt();
@@ -1465,6 +1519,11 @@ void MainWindow::hideToolViews()
         }
     }
     m_centralWidget->setFocus();
+}
+
+void MainWindow::toggleToolViews(KMultiTabBar::KMultiTabBarPosition side)
+{
+    m_sidebars[side]->toggleToolViews();
 }
 
 void MainWindow::startRestore(KConfigBase *config, const QString &group)

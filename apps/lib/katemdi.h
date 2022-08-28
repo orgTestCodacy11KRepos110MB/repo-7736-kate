@@ -73,11 +73,14 @@ private Q_SLOTS:
     void updateActions();
 
 private:
+    void setupToggleToolViewsActions();
+
     MainWindow *m_mw;
     KToggleAction *m_showSidebarsAction;
     std::unordered_map<ToolView *, std::vector<QAction *>> m_toolToActions;
     KActionMenu *m_toolMenu;
     QAction *m_hideToolViews;
+
     KActionMenu *m_sidebarButtonsMenu;
 };
 
@@ -304,9 +307,14 @@ public:
      */
     void saveSession(KConfigGroup &config);
 
+    // See m_toggledToolviews.
+    void toggleToolViews();
+
 public Q_SLOTS:
     // reimplemented, to block a show() call if all sidebars are forced hidden
     void setVisible(bool visible) override;
+
+    void addToToggled(ToolView *tv);
 
 protected:
     bool eventFilter(QObject *obj, QEvent *ev) override;
@@ -485,6 +493,8 @@ public Q_SLOTS:
      * hide all tool views
      */
     void hideToolViews();
+
+    void toggleToolViews(KMultiTabBar::KMultiTabBarPosition side);
 
 protected:
     /**
