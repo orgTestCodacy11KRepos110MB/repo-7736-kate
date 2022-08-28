@@ -1113,17 +1113,17 @@ void Sidebar::toggleToolViews()
     if (!m_toggledTools.empty()) {
         for (auto *tv : m_toggledTools) {
             if (tv) {
-                showWidget(tv);
+                showToolView(tv);
             }
         }
         m_toggledTools.clear();
         return;
     }
 
-    for (auto *tv : m_toolviews) {
-        if (tv->isVisible()) {
-            hideWidget(tv);
-            addToToggled(tv);
+    for (auto &tv : m_widgetToId) {
+        if (tv.first->isVisible()) {
+            hideToolView(tv.first);
+            addToToggled(tv.first);
         }
     }
 }

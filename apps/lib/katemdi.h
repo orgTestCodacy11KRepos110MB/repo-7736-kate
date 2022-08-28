@@ -394,6 +394,12 @@ private:
     std::map<QString, int> m_tvIdToTabId;
     std::map<QString, int> m_tvIdToTabBar;
 
+    /**
+     * List of toolviews that were hidden by a call to toggleToolViews(),
+     * so that there are toggled back to visible by a subsequent call to
+     * toggleToolViews().
+     */
+    std::vector<ToolView *> m_toggledTools;
     int m_lastSize;
     int m_popupButton = 0;
     QPointer<QLabel> m_resizePlaceholder;
