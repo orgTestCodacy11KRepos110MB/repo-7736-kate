@@ -21,6 +21,7 @@
 #include <KIO/ApplicationLauncherJob>
 #include <KIO/CopyJob>
 #include <KIO/DeleteJob>
+#include <KIconLoader>
 #include <kio_version.h>
 #if KIO_VERSION >= QT_VERSION_CHECK(5, 98, 0)
 #include <KIO/JobUiDelegateFactory>
@@ -191,10 +192,10 @@ void KateFileTree::setModel(QAbstractItemModel *model)
     header()->setStretchLastSection(false);
     header()->setSectionResizeMode(0, QHeaderView::Stretch);
 
-    const int minSize = m_hasCloseButton ? 16 : 1;
-    header()->setMinimumSectionSize(minSize);
-    header()->setSectionResizeMode(1, QHeaderView::Fixed);
-    header()->resizeSection(1, minSize);
+    header()->setMinimumSectionSize(KIconLoader::SizeSmall);
+
+    header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    header()->setSectionHidden(1, !m_hasCloseButton);
 
     // proxy never emits rowsMoved
     connect(m_proxyModel->sourceModel(), &QAbstractItemModel::rowsMoved, this, &KateFileTree::onRowsMoved);
@@ -216,15 +217,8 @@ void KateFileTree::onRowsMoved(const QModelIndex &, int, int, const QModelIndex 
 void KateFileTree::setShowCloseButton(bool show)
 {
     m_hasCloseButton = show;
-    static_cast<CloseIconStyleDelegate *>(itemDelegate())->setShowCloseButton(show);
-
-    if (!header())
-        return;
-
-    const int minSize = show ? 16 : 1;
-    header()->setMinimumSectionSize(minSize);
-    header()->resizeSection(1, minSize);
-    header()->viewport()->update();
+    static_cast<CloseIconStyleDelegate *>(itemDelegate())->setShowCloseButton(m_hasCloseButton);
+    header()->setSectionHidden(1, !m_hasCloseButton);
 }
 
 void KateFileTree::setupContextMenuActionGroups()
