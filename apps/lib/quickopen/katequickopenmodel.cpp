@@ -68,6 +68,10 @@ QVariant KateQuickOpenModel::data(const QModelIndex &idx, int role) const
         return entry.url.isEmpty() ? QUrl::fromLocalFile(entry.filePath) : entry.url;
     case Role::Score:
         return entry.score;
+    case Role::GlobbingMatchStart:
+        return entry.globbingMatchStart;
+    case Role::GlobbingMatchedLength:
+        return entry.globbingMatchedLength;
     case Role::Document:
         return QVariant::fromValue(entry.document);
     default:

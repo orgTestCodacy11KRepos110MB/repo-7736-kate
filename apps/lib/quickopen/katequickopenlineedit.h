@@ -23,6 +23,11 @@ public:
         return m_listMode;
     }
 
+    KateQuickOpenSearchMode sortMode() const
+    {
+        return m_sortMode;
+    }
+
 protected:
     void contextMenuEvent(QContextMenuEvent *event) override;
 
@@ -32,9 +37,11 @@ private:
 private:
     std::unique_ptr<QMenu> menu;
     KateQuickOpenModelList m_listMode;
+    KateQuickOpenSearchMode m_sortMode;
 
 Q_SIGNALS:
     void listModeChanged(KateQuickOpenModelList mode);
+    void searchModeChanged(KateQuickOpenSearchMode mode);
 };
 
 #endif // QUICKOPENLINEEDIT_H

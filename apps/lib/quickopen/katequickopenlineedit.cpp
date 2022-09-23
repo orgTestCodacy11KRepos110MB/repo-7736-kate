@@ -14,6 +14,7 @@
 #include <KSharedConfig>
 
 static const QString CONFIG_QUICKOPEN_LISTMODE{QStringLiteral("Quickopen List Mode")};
+static const QString CONFIG_QUICKOPEN_SEARCHMODE{QStringLiteral("Quickopen Search Mode")};
 
 QuickOpenLineEdit::QuickOpenLineEdit(QWidget *parent)
     : QLineEdit(parent)
@@ -26,6 +27,9 @@ QuickOpenLineEdit::QuickOpenLineEdit(QWidget *parent)
 
     const bool cfgListMode = cg.readEntry(CONFIG_QUICKOPEN_LISTMODE, true);
     m_listMode = cfgListMode ? KateQuickOpenModelList::CurrentProject : KateQuickOpenModelList::AllProjects;
+
+    const bool cfgSortMode = cg.readEntry(CONFIG_QUICKOPEN_SEARCHMODE, true);
+    m_sortMode = cfgSortMode ? KateQuickOpenSearchMode::Fuzzy : KateQuickOpenSearchMode::Globbing;
 }
 
 QuickOpenLineEdit::~QuickOpenLineEdit()
@@ -34,6 +38,7 @@ QuickOpenLineEdit::~QuickOpenLineEdit()
     KConfigGroup cg(cfg, "General");
 
     cg.writeEntry(CONFIG_QUICKOPEN_LISTMODE, m_listMode == KateQuickOpenModelList::CurrentProject);
+    cg.writeEntry(CONFIG_QUICKOPEN_SEARCHMODE, m_sortMode == KateQuickOpenSearchMode::Fuzzy);
 }
 
 void QuickOpenLineEdit::contextMenuEvent(QContextMenuEvent *event)
@@ -77,4 +82,33 @@ void QuickOpenLineEdit::setupMenu()
     act->setChecked(cfgListMode);
 
     actGp->addAction(act);
+
+    menu->addSeparator();
+
+    const bool cfgSortMode = m_sortMode == KateQuickOpenSearchMode::Fuzzy;
+    QActionGroup *sortGp = new QActionGroup(this);
+
+    act = menu->addAction(i18n("Fuzzy search"));
+    act->setCheckable(true);
+    connect(act, &QAction::toggled, this, [this](bool checked) {
+        if (checked) {
+            m_sortMode = KateQuickOpenSearchMode::Fuzzy;
+            Q_EMIT searchModeChanged(m_sortMode);
+        }
+    });
+    act->setChecked(cfgSortMode);
+
+    sortGp->addAction(act);
+
+    act = menu->addAction(i18n("Wildcard matching"));
+    act->setCheckable(true);
+    connect(act, &QAction::toggled, this, [this](bool checked) {
+        if (checked) {
+            m_sortMode = KateQuickOpenSearchMode::Globbing;
+            Q_EMIT searchModeChanged(m_sortMode);
+        }
+    });
+    act->setChecked(!cfgSortMode);
+
+    sortGp->addAction(act);
 }

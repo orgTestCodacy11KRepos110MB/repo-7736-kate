@@ -25,16 +25,20 @@ struct ModelEntry {
     QString filePath; // display string for right column
     KTextEditor::Document *document = nullptr; // document for entry, if already open
     int score = -1;
+    int globbingMatchStart = 0;
+    int globbingMatchedLength = 0;
 };
 
 // needs to be defined outside of class to support forward declaration elsewhere
 enum KateQuickOpenModelList : int { CurrentProject, AllProjects };
 
+enum class KateQuickOpenSearchMode : int { Fuzzy, Globbing };
+
 class KateQuickOpenModel : public QAbstractTableModel
 {
     Q_OBJECT
 public:
-    enum Role { FileName = Qt::UserRole + 1, FilePath, Score, Document };
+    enum Role { FileName = Qt::UserRole + 1, FilePath, Score, Document, GlobbingMatchStart, GlobbingMatchedLength };
     explicit KateQuickOpenModel(QObject *parent = nullptr);
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     int columnCount(const QModelIndex &parent) const override;
@@ -46,9 +50,20 @@ public:
     {
         return m_listMode;
     }
+
     void setListMode(List mode)
     {
         m_listMode = mode;
+    }
+
+    KateQuickOpenSearchMode sortMode() const
+    {
+        return m_sortMode;
+    }
+
+    void setSortMode(KateQuickOpenSearchMode mode)
+    {
+        m_sortMode = mode;
     }
 
     bool isValid(int row) const
@@ -59,6 +74,13 @@ public:
     void setScoreForIndex(int row, int score)
     {
         m_modelEntries[row].score = score;
+    }
+
+    void setGlobbingResultForIndex(int row, int matchStart, int matchedLength)
+    {
+        m_modelEntries[row].globbingMatchStart = matchStart;
+        m_modelEntries[row].globbingMatchedLength = matchedLength;
+        m_modelEntries[row].score = -1;
     }
 
     const QString &idxToFileName(int row) const
@@ -82,6 +104,22 @@ public:
         return m_modelEntries.at(idx.row()).score;
     }
 
+    int idxGlobbingMatchStart(const QModelIndex &idx) const
+    {
+        if (!idx.isValid()) {
+            return -1;
+        }
+        return m_modelEntries.at(idx.row()).globbingMatchStart;
+    }
+
+    int idxGlobbingMatchedLength(const QModelIndex &idx) const
+    {
+        if (!idx.isValid()) {
+            return -1;
+        }
+        return m_modelEntries.at(idx.row()).globbingMatchedLength;
+    }
+
     bool isOpened(const QModelIndex &idx) const
     {
         if (!idx.isValid()) {
@@ -99,6 +137,7 @@ private:
     std::vector<ModelEntry> m_modelEntries;
     QString m_projectBase;
     List m_listMode{};
+    KateQuickOpenSearchMode m_sortMode = KateQuickOpenSearchMode::Fuzzy;
 };
 
 #endif

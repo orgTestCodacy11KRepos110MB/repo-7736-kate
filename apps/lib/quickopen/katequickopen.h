@@ -21,6 +21,7 @@ class QuickOpenStyleDelegate;
 class QTreeView;
 class KateQuickOpenModel;
 enum KateQuickOpenModelList : int;
+enum class KateQuickOpenSearchMode : int;
 
 class QuickOpenFilterProxyModel;
 
@@ -50,6 +51,8 @@ private Q_SLOTS:
     void slotReturnPressed();
 
     void slotListModeChanged(KateQuickOpenModelList mode);
+
+    void slotSearchModeChanged(KateQuickOpenSearchMode mode);
 
 private:
     KateMainWindow *m_mainWindow;

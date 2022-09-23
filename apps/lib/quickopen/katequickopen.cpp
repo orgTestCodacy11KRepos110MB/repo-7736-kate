@@ -30,6 +30,7 @@
 #include <QLabel>
 #include <QPainter>
 #include <QPointer>
+#include <QRegExp>
 #include <QSortFilterProxyModel>
 #include <QStandardItemModel>
 #include <QStyledItemDelegate>
@@ -44,6 +45,7 @@ class QuickOpenFilterProxyModel final : public QSortFilterProxyModel
 public:
     QuickOpenFilterProxyModel(QObject *parent = nullptr)
         : QSortFilterProxyModel(parent)
+        , globbingRegex(QString(), Qt::CaseInsensitive, QRegExp::Wildcard)
     {
     }
 
@@ -70,6 +72,14 @@ protected:
         auto sm = static_cast<KateQuickOpenModel *>(sourceModel());
         if (!sm->isValid(sourceRow)) {
             return false;
+        }
+
+        if (sm->sortMode() == KateQuickOpenSearchMode::Globbing) {
+            int matchStart = globbingRegex.indexIn(sm->idxToFilePath(sourceRow).toString());
+            int matchedLength = globbingRegex.matchedLength();
+            void setGlobbingResultForIndex(int matchStart, int matchedLength);
+            sm->setGlobbingResultForIndex(sourceRow, matchStart, matchedLength);
+            return (matchStart != -1);
         }
 
         QStringView fileNameMatchPattern = pattern;
@@ -135,6 +145,7 @@ public Q_SLOTS:
         beginResetModel();
         pattern = splitted;
         matchPath = pattern.contains(QLatin1Char('/'));
+        globbingRegex.setPattern(pattern);
         endResetModel();
 
         return true;
@@ -154,6 +165,7 @@ private:
 private:
     QString pattern;
     bool matchPath = false;
+    QRegExp globbingRegex;
 };
 
 class QuickOpenStyleDelegate : public QStyledItemDelegate
@@ -169,6 +181,9 @@ public:
         QStyleOptionViewItem options = option;
         initStyleOption(&options, index);
 
+        const auto *proxyModel = dynamic_cast<const QuickOpenFilterProxyModel *>(index.model());
+        const auto *qoModel = dynamic_cast<const KateQuickOpenModel *>(proxyModel->sourceModel());
+
         QString name = index.data(KateQuickOpenModel::FileName).toString();
         QString path = index.data(KateQuickOpenModel::FilePath).toString();
 
@@ -182,29 +197,53 @@ public:
         fmt.setForeground(options.palette.link().color());
         fmt.setFontWeight(QFont::Bold);
 
-        const int nameLen = name.length();
-        // space between name and path
-        constexpr int space = 1;
-        QVector<QTextLayout::FormatRange> formats;
+        QTextCharFormat boldFmtPath;
+        boldFmtPath.setFontWeight(QFont::Bold);
+        boldFmtPath.setFontPointSize(options.font.pointSize() - 1);
 
-        // collect formats
-        int pos = m_filterString.lastIndexOf(QLatin1Char('/'));
-        if (pos > -1) {
-            ++pos;
-            auto pattern = QStringView(m_filterString).mid(pos);
-            auto nameFormats = kfts::get_fuzzy_match_formats(pattern, name, 0, fmt);
-            formats.append(nameFormats);
-        } else {
-            auto nameFormats = kfts::get_fuzzy_match_formats(m_filterString, name, 0, fmt);
-            formats.append(nameFormats);
-        }
-        QTextCharFormat boldFmt;
-        boldFmt.setFontWeight(QFont::Bold);
-        boldFmt.setFontPointSize(options.font.pointSize() - 1);
-        auto pathFormats = kfts::get_fuzzy_match_formats(m_filterString, path, nameLen + space, boldFmt);
         QTextCharFormat gray;
         gray.setForeground(Qt::gray);
         gray.setFontPointSize(options.font.pointSize() - 1);
+
+        const int nameLen = name.length();
+        const int pathLen = path.length();
+        // space between name and path
+        constexpr int space = 1;
+        QVector<QTextLayout::FormatRange> formats;
+        QVector<QTextLayout::FormatRange> pathFormats;
+
+        // collect formats
+
+        if (qoModel->sortMode() == KateQuickOpenSearchMode::Globbing) {
+            int matchStart = index.data(KateQuickOpenModel::GlobbingMatchStart).toInt();
+            int matchedLength = index.data(KateQuickOpenModel::GlobbingMatchedLength).toInt();
+            if (matchedLength > 0) {
+                int matchStartFile = std::max(0, matchStart - pathLen - 1);
+                int matchedLengthFile = matchedLength - ((matchStart == pathLen) ? 1 : 0);
+
+                if (matchStart < pathLen) {
+                    matchedLengthFile = (matchStart + matchedLength) - pathLen - 1;
+                    matchedLength = std::min(matchedLength, pathLen - matchStart);
+                    pathFormats.push_back({matchStart + nameLen + space, matchedLength, boldFmtPath});
+                }
+                if (matchedLengthFile > 0) {
+                    formats.push_back({matchStartFile, matchedLengthFile, fmt});
+                }
+            }
+        } else {
+            int pos = m_filterString.lastIndexOf(QLatin1Char('/'));
+            if (pos > -1) {
+                ++pos;
+                auto pattern = QStringView(m_filterString).mid(pos);
+                auto nameFormats = kfts::get_fuzzy_match_formats(pattern, name, 0, fmt);
+                formats.append(nameFormats);
+            } else {
+                auto nameFormats = kfts::get_fuzzy_match_formats(m_filterString, name, 0, fmt);
+                formats.append(nameFormats);
+            }
+            pathFormats = kfts::get_fuzzy_match_formats(m_filterString, path, nameLen + space, boldFmtPath);
+        }
+
         formats.append({nameLen + space, static_cast<int>(path.length()), gray});
         formats.append(pathFormats);
 
@@ -283,6 +322,7 @@ KateQuickOpen::KateQuickOpen(KateMainWindow *mainWindow)
     });
     connect(m_inputLine, &QuickOpenLineEdit::returnPressed, this, &KateQuickOpen::slotReturnPressed);
     connect(m_inputLine, &QuickOpenLineEdit::listModeChanged, this, &KateQuickOpen::slotListModeChanged);
+    connect(m_inputLine, &QuickOpenLineEdit::searchModeChanged, this, &KateQuickOpen::slotSearchModeChanged);
 
     connect(m_listView, &QTreeView::activated, this, &KateQuickOpen::slotReturnPressed);
     connect(m_listView, &QTreeView::clicked, this, &KateQuickOpen::slotReturnPressed); // for single click
@@ -300,6 +340,7 @@ KateQuickOpen::KateQuickOpen(KateMainWindow *mainWindow)
     setHidden(true);
 
     m_base_model->setListMode(m_inputLine->listMode());
+    m_base_model->setSortMode(m_inputLine->sortMode());
 
     // fill stuff
     updateState();
@@ -407,6 +448,13 @@ void KateQuickOpen::slotReturnPressed()
 void KateQuickOpen::slotListModeChanged(KateQuickOpenModel::List mode)
 {
     m_base_model->setListMode(mode);
+    // this changes things again, needs refresh, let's go all the way
+    updateState();
+}
+
+void KateQuickOpen::slotSearchModeChanged(KateQuickOpenSearchMode mode)
+{
+    m_base_model->setSortMode(mode);
     // this changes things again, needs refresh, let's go all the way
     updateState();
 }
