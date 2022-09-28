@@ -1127,7 +1127,7 @@ void KateMainWindow::readProperties(const KConfigGroup &config)
     // KDE5: TODO startRestore should take a const KConfigBase*, or even just a const KConfigGroup&,
     // but this propagates down to interfaces/kate/plugin.h so all plugins have to be ported
     KConfigBase *configBase = const_cast<KConfig *>(config.config());
-    startRestore(configBase, config.name());
+    startRestore(configBase, config.name(), true);
 
     // perhaps enable plugin guis
     KateApp::self()->pluginManager()->enableAllPluginsGUI(this, configBase);

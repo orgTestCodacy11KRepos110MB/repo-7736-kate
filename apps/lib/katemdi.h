@@ -548,7 +548,7 @@ public:
      * @param config config object to use
      * @param group config group to use
      */
-    void startRestore(KConfigBase *config, const QString &group);
+    void startRestore(KConfigBase *config, const QString &group, bool newSession = false);
 
     /**
      * finish the restore

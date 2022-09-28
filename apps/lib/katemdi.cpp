@@ -1486,7 +1486,7 @@ void MainWindow::hideToolViews()
     m_centralWidget->setFocus();
 }
 
-void MainWindow::startRestore(KConfigBase *config, const QString &group)
+void MainWindow::startRestore(KConfigBase *config, const QString &group, bool newSession)
 {
     // first save this stuff
     m_restoreConfig = config;
@@ -1498,7 +1498,9 @@ void MainWindow::startRestore(KConfigBase *config, const QString &group)
 
     // apply size once, to get sizes ready ;)
     KConfigGroup cg(m_restoreConfig, m_restoreGroup);
-    KWindowConfig::restoreWindowSize(windowHandle(), cg);
+    if (!newSession) {
+        KWindowConfig::restoreWindowSize(windowHandle(), cg);
+    }
 
     // restore the sidebars
     for (auto &sidebar : qAsConst(m_sidebars)) {
