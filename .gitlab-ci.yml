@@ -1,9 +1,48 @@
 # SPDX-FileCopyrightText: None
 # SPDX-License-Identifier: CC0-1.0
 
-include:
-  - https://invent.kde.org/sysadmin/ci-utilities/raw/master/gitlab-templates/linux.yml
-  - https://invent.kde.org/sysadmin/ci-utilities/raw/master/gitlab-templates/freebsd.yml
-  - https://invent.kde.org/sysadmin/ci-utilities/raw/master/gitlab-templates/windows.yml
-  - https://invent.kde.org/sysadmin/ci-utilities/raw/master/gitlab-templates/linux-qt6.yml
-  - https://invent.kde.org/sysadmin/ci-utilities/raw/master/gitlab-templates/freebsd-qt6.yml
+# include:
+#   - https://invent.kde.org/sysadmin/ci-utilities/raw/master/gitlab-templates/linux.yml
+#   - https://invent.kde.org/sysadmin/ci-utilities/raw/master/gitlab-templates/freebsd.yml
+#   - https://invent.kde.org/sysadmin/ci-utilities/raw/master/gitlab-templates/windows.yml
+#   - https://invent.kde.org/sysadmin/ci-utilities/raw/master/gitlab-templates/linux-qt6.yml
+#   - https://invent.kde.org/sysadmin/ci-utilities/raw/master/gitlab-templates/freebsd-qt6.yml
+
+# Nightly win64 craft build of Kate
+craft_nightly_windows_qt515:
+  stage: deploy
+  image: kdeorg/ci-windows-qt515:latest
+  tags:
+    - Windows
+  variables:
+    PYTHONUTF8: 1
+    CRAFT_BASE: "C:/Craft"
+    PROJECT: Kate
+    CRAFT_TARGET: master
+    CRAFT_PLATFORM: windows-msvc2019_64-cl
+    CRAFT_BUILD_BLUEPRINT: kate
+    CRAFT_BUILD_TYPE: Nightly
+    CRAFTMASTER_CONFIG: binary-factory-tooling/craft/configs/master/CraftBinaryCache.ini
+    CRAFT_PROJECT_PARAMS: --target master
+  interruptible: true
+  before_script:
+    - cd "$CRAFT_BASE"
+    # Make sure NSIS is installed (TODO: Pre-install nsis in the Docker image)
+    - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --target ${CRAFT_PLATFORM} -c ${CRAFT_OPTIONS} nsis
+    # Make sure the build environment for this application is clean
+    - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --target ${CRAFT_PLATFORM} -c ${CRAFT_OPTIONS} ${CRAFT_PROJECT_PARAMS} --unmerge ${CRAFT_BUILD_BLUEPRINT} ${CRAFT_REBUILD_BLUEPRINT}
+  script:
+    - cd "$CRAFT_BASE"
+    # Ask Craftmaster to ensure all the dependencies are installed for this application we are going to be building
+    - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --target ${CRAFT_PLATFORM} -c ${CRAFT_OPTIONS} ${CRAFT_PROJECT_PARAMS} --install-deps ${CRAFT_BUILD_BLUEPRINT}
+    # Actually build the application now
+    - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --target ${CRAFT_PLATFORM} -c ${CRAFT_OPTIONS} --no-cache ${CRAFT_PROJECT_PARAMS} ${CRAFT_BUILD_BLUEPRINT} ${CRAFT_REBUILD_BLUEPRINT}
+  after_script:
+    # Ensure gpg-agent and dbus-daemon are no longer around
+    # For reasons unknown, these processes somehow end up running within the Binary Factory environment
+    # If they're allowed to continue running, then later cleanup operations will fail and leave the builder setup broken (requiring manual intervention to fix)
+    - taskkill /F /IM gpg-agent.exe
+    - taskkill /F /IM dbus-daemon.exe
+    - cd "$CRAFT_BASE"
+    - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --target ${CRAFT_PLATFORM} -c ${CRAFT_OPTIONS} --clean-unused
+  when: manual
