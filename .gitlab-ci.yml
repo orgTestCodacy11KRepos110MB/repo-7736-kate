@@ -22,7 +22,7 @@ craft_nightly_windows_qt515:
     CRAFT_PLATFORM: windows-msvc2019_64-cl
     CRAFT_BUILD_BLUEPRINT: kate
     CRAFT_BUILD_TYPE: Nightly
-    CRAFTMASTER_CONFIG: binary-factory-tooling/craft/configs/master/CraftBinaryCache.ini
+    CRAFTMASTER_CONFIG: bf-tooling/craft/configs/master/CraftBinaryCache.ini
     CRAFT_PROJECT_PARAMS: --target master
   interruptible: true
   before_script:
