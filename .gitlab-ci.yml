@@ -34,6 +34,9 @@ variables:
     - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --config-override CI-Craft-Deploy-Config.ini --target ${CRAFT_PLATFORM} -c (-split ${CRAFT_OPTIONS}) (-split ${CRAFT_PROJECT_PARAMS}) --install-deps ${CRAFT_BUILD_BLUEPRINT}
     # Actually build the application now
     - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --config-override CI-Craft-Deploy-Config.ini --target ${CRAFT_PLATFORM} -c (-split ${CRAFT_OPTIONS}) --no-cache (-split ${CRAFT_PROJECT_PARAMS}) ${CRAFT_BUILD_BLUEPRINT} (-split ${CRAFT_REBUILD_BLUEPRINT})
+    # Now generate an installer for it
+    - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --config-override CI-Craft-Deploy-Config.ini --target ${CRAFT_PLATFORM} -c (-split ${CRAFT_OPTIONS}) (-split ${CRAFT_PROJECT_PARAMS}) --package ${CRAFT_BUILD_BLUEPRINT}
+    - if (${CRAFT_PACKAGE_APPX}) { python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --config-override CI-Craft-Deploy-Config.ini --target ${CRAFT_PLATFORM} -c (-split ${CRAFT_OPTIONS}) --options "[Packager]PackageType=AppxPackager" (-split ${CRAFT_PROJECT_PARAMS}) --package ${CRAFT_BUILD_BLUEPRINT} }
   after_script:
     # Ensure gpg-agent and dbus-daemon are no longer around
     # For reasons unknown, these processes somehow end up running within the Binary Factory environment
