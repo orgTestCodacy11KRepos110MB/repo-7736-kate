@@ -8,8 +8,10 @@
 #   - https://invent.kde.org/sysadmin/ci-utilities/raw/master/gitlab-templates/linux-qt6.yml
 #   - https://invent.kde.org/sysadmin/ci-utilities/raw/master/gitlab-templates/freebsd-qt6.yml
 
-# Nightly win64 craft build of Kate
-craft_nightly_windows_qt515:
+variables:
+  CRAFT_BUILD_BLUEPRINT: kate
+
+.craft_build_windows_qt515:
   stage: deploy
   image: kdeorg/ci-windows-qt515:latest
   tags:
@@ -17,13 +19,8 @@ craft_nightly_windows_qt515:
   variables:
     PYTHONUTF8: 1
     CRAFT_BASE: "C:/Craft"
-    PROJECT: Kate
-    CRAFT_TARGET: master
     CRAFT_PLATFORM: windows-msvc2019_64-cl
-    CRAFT_BUILD_BLUEPRINT: kate
-    CRAFT_BUILD_TYPE: Nightly
     CRAFTMASTER_CONFIG: bf-tooling/craft/configs/master/CraftBinaryCache.ini
-    CRAFT_PROJECT_PARAMS: --target master
   interruptible: true
   before_script:
     - cd "$CRAFT_BASE"
@@ -46,3 +43,10 @@ craft_nightly_windows_qt515:
     - cd "$CRAFT_BASE"
     - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --config-override CI-Craft-Deploy-Config.ini --target ${CRAFT_PLATFORM} -c (-split ${CRAFT_OPTIONS}) --clean-unused
   when: manual
+
+# Nightly win64 craft build of Kate
+craft_nightly_windows_qt515:
+  extends: .craft_build_windows_qt515
+  variables:
+    CRAFT_BUILD_TYPE: Nightly
+    CRAFT_PROJECT_PARAMS: --target master
