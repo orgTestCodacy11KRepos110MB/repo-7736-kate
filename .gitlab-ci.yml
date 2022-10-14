@@ -41,8 +41,8 @@ craft_nightly_windows_qt515:
     # Ensure gpg-agent and dbus-daemon are no longer around
     # For reasons unknown, these processes somehow end up running within the Binary Factory environment
     # If they're allowed to continue running, then later cleanup operations will fail and leave the builder setup broken (requiring manual intervention to fix)
-    - taskkill /F /IM gpg-agent.exe
-    - taskkill /F /IM dbus-daemon.exe
+    - taskkill /F /IM gpg-agent.exe; $null
+    - taskkill /F /IM dbus-daemon.exe; $null
     - cd "$CRAFT_BASE"
     - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --target ${CRAFT_PLATFORM} -c ${CRAFT_OPTIONS} --clean-unused
   when: manual
