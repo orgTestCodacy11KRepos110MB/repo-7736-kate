@@ -50,3 +50,10 @@ craft_nightly_windows_qt515:
   variables:
     CRAFT_BUILD_TYPE: Nightly
     CRAFT_PROJECT_PARAMS: --target master
+
+# win64 craft build of latest Kate release
+craft_release_windows_qt515:
+  extends: .craft_build_windows_qt515
+  variables:
+    CRAFT_PACKAGE_APPX: 1
+    CRAFT_BUILD_TYPE: Release
