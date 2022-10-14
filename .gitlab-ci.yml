@@ -26,6 +26,7 @@ craft_nightly_windows_qt515:
     CRAFT_PROJECT_PARAMS: --target master
   interruptible: true
   before_script:
+    - Set-PSDebug -Trace 2
     - cd "$CRAFT_BASE"
     # Make sure NSIS is installed (TODO: Pre-install nsis in the Docker image)
     - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --target ${CRAFT_PLATFORM} -c ${CRAFT_OPTIONS} nsis
