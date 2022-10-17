@@ -34,7 +34,7 @@ variables:
   script:
     - cd "$CRAFT_BASE"
     # Ask Craftmaster to ensure all the dependencies are installed for this application we are going to be building
-    - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --config-override CI-Craft-Deploy-Config.ini --target ${CRAFT_PLATFORM} -c (-split ${CRAFT_OPTIONS}) --ignoreInstalled (-split ${CRAFT_PROJECT_PARAMS}) --install-deps ${CRAFT_BUILD_BLUEPRINT}
+    - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --config-override CI-Craft-Deploy-Config.ini --target ${CRAFT_PLATFORM} -c (-split ${CRAFT_OPTIONS}) --ignoreInstalled (-split ${CRAFT_PROJECT_PARAMS}) --install-deps -vv ${CRAFT_BUILD_BLUEPRINT}
     # Actually build the application now
     - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --config-override CI-Craft-Deploy-Config.ini --target ${CRAFT_PLATFORM} -c (-split ${CRAFT_OPTIONS}) --no-cache (-split ${CRAFT_PROJECT_PARAMS}) ${CRAFT_BUILD_BLUEPRINT} (-split ${CRAFT_REBUILD_BLUEPRINT})
     # Now generate an installer for it
