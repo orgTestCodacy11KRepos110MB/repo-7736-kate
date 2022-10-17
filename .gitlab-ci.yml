@@ -24,7 +24,8 @@ variables:
   interruptible: true
   before_script:
     - cd "$CRAFT_BASE"
-    - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --config-override CI-Craft-Deploy-Config.ini --target ${CRAFT_PLATFORM} -c -i --no-cache craft
+    # Update Craft itself
+    - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --config-override CI-Craft-Deploy-Config.ini --target ${CRAFT_PLATFORM} -c -i --options virtual.ignored=True --update craft
     # Make sure NSIS is installed (TODO: Pre-install nsis in the Docker image)
     - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --config-override CI-Craft-Deploy-Config.ini --target ${CRAFT_PLATFORM} -c (-split ${CRAFT_OPTIONS}) nsis
     # Make sure the build environment for this application is clean
