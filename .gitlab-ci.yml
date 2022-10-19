@@ -35,7 +35,7 @@ variables:
     # Ask Craftmaster to ensure all the dependencies are installed for this application we are going to be building
     - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --config-override CI-Craft-Deploy-Config.ini --target ${CRAFT_PLATFORM} -c (-split ${CRAFT_OPTIONS}) (-split ${CRAFT_PROJECT_PARAMS}) --install-deps ${CRAFT_BUILD_BLUEPRINT}
     # Actually build the application now
-    - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --config-override CI-Craft-Deploy-Config.ini --target ${CRAFT_PLATFORM} -c (-split ${CRAFT_OPTIONS}) --no-cache (-split ${CRAFT_PROJECT_PARAMS}) --src-dir ${CI_PROJECT_DIR} ${CRAFT_BUILD_BLUEPRINT} (-split ${CRAFT_REBUILD_BLUEPRINT})
+    - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --config-override CI-Craft-Deploy-Config.ini --target ${CRAFT_PLATFORM} -c (-split ${CRAFT_OPTIONS}) --no-cache (-split ${CRAFT_PROJECT_PARAMS}) --src-dir ${CI_PROJECT_DIR} -vv ${CRAFT_BUILD_BLUEPRINT} (-split ${CRAFT_REBUILD_BLUEPRINT})
   after_script:
     # Ensure gpg-agent and dbus-daemon are no longer around
     # For reasons unknown, these processes somehow end up running within the Binary Factory environment
