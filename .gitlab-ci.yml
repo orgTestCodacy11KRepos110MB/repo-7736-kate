@@ -8,8 +8,6 @@
 #   - https://invent.kde.org/sysadmin/ci-utilities/raw/master/gitlab-templates/linux-qt6.yml
 #   - https://invent.kde.org/sysadmin/ci-utilities/raw/master/gitlab-templates/freebsd-qt6.yml
 
-variables:
-  CRAFT_BUILD_BLUEPRINT: kate
 
 .craft_build_windows_qt515:
   stage: deploy
@@ -20,6 +18,7 @@ variables:
     PYTHONUTF8: 1
     CRAFT_BASE: "C:/Craft"
     CRAFT_PLATFORM: windows-msvc2019_64-cl
+    CRAFT_BUILD_BLUEPRINT: ${CI_PROJECT_NAME}
     CRAFTMASTER_CONFIG: bf-tooling/craft/configs/master/CraftBinaryCache.ini
   interruptible: true
   before_script:
