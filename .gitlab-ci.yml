@@ -19,11 +19,12 @@
     CRAFT_BASE: "C:/Craft"
     CRAFT_PLATFORM: windows-msvc2019_64-cl
     CRAFT_BUILD_BLUEPRINT: ${CI_PROJECT_NAME}
-    CRAFT_PROJECT_PARAMS: --target master
     CRAFTMASTER_CONFIG: bf-tooling/craft/configs/master/CraftBinaryCache.ini
   interruptible: true
   before_script:
     - cd "$CRAFT_BASE"
+    - python craftmaster/Craftmaster.py --setup --config "${CRAFTMASTER_CONFIG}" --config-override CI-Craft-Deploy-Config.ini --target ${CRAFT_PLATFORM} -c --set version=master ${CRAFT_BUILD_BLUEPRINT}
+    - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --config-override CI-Craft-Deploy-Config.ini --target ${CRAFT_PLATFORM} -c --set branch=${CI_COMMIT_REF_NAME} ${CRAFT_BUILD_BLUEPRINT}
     # Update Craft itself
     - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --config-override CI-Craft-Deploy-Config.ini --target ${CRAFT_PLATFORM} -c -i --options virtual.ignored=True --update craft
     # Make sure NSIS is installed (TODO: Pre-install nsis in the Docker image)
