@@ -19,7 +19,7 @@
     CRAFT_BASE: "C:/Craft"
     CRAFT_PLATFORM: windows-msvc2019_64-cl
     CRAFT_BUILD_BLUEPRINT: ${CI_PROJECT_NAME}
-    CRAFT_PROJECT_PARAMS: --target ${CI_COMMIT_REF_NAME}
+    CRAFT_PROJECT_PARAMS: --target master
     CRAFTMASTER_CONFIG: bf-tooling/craft/configs/master/CraftBinaryCache.ini
   interruptible: true
   before_script:
