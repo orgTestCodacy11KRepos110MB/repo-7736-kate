@@ -11,7 +11,7 @@
 
 .craft_build_windows_qt515:
   stage: deploy
-  image: kdeorg/ci-windows-qt515:latest
+  image: kdeorg/windows-msvc2019-qt515:latest
   tags:
     - Windows
   variables:
@@ -19,24 +19,24 @@
     CRAFT_BASE: "C:/Craft"
     CRAFT_PLATFORM: windows-msvc2019_64-cl
     CRAFT_BUILD_BLUEPRINT: ${CI_PROJECT_NAME}
-    CRAFTMASTER_CONFIG: bf-tooling/craft/configs/master/CraftBinaryCache.ini
+    CRAFTMASTER_CONFIG: ci-utilities/resources/CraftConfig.ini
   interruptible: true
   before_script:
     - cd "$CRAFT_BASE"
-    - python craftmaster/Craftmaster.py --setup --config "${CRAFTMASTER_CONFIG}" --config-override CI-Craft-Deploy-Config.ini --target ${CRAFT_PLATFORM} -c --set version=master ${CRAFT_BUILD_BLUEPRINT}
-    - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --config-override CI-Craft-Deploy-Config.ini --target ${CRAFT_PLATFORM} -c --set branch=${CI_COMMIT_REF_NAME} ${CRAFT_BUILD_BLUEPRINT}
+    - python craftmaster/Craftmaster.py --setup --config "${CRAFTMASTER_CONFIG}" --target ${CRAFT_PLATFORM} -c --set version=master ${CRAFT_BUILD_BLUEPRINT}
+    - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --target ${CRAFT_PLATFORM} -c --set branch=${CI_COMMIT_REF_NAME} ${CRAFT_BUILD_BLUEPRINT}
     # Update Craft itself
-    - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --config-override CI-Craft-Deploy-Config.ini --target ${CRAFT_PLATFORM} -c -i --options virtual.ignored=True --update craft
+    - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --target ${CRAFT_PLATFORM} -c -i --options virtual.ignored=True --update craft
     # Make sure NSIS is installed (TODO: Pre-install nsis in the Docker image)
-    - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --config-override CI-Craft-Deploy-Config.ini --target ${CRAFT_PLATFORM} -c (-split ${CRAFT_OPTIONS}) nsis
+    - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --target ${CRAFT_PLATFORM} -c (-split ${CRAFT_OPTIONS}) nsis
     # Make sure the build environment for this application is clean
-    - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --config-override CI-Craft-Deploy-Config.ini --target ${CRAFT_PLATFORM} -c (-split ${CRAFT_OPTIONS}) (-split ${CRAFT_PROJECT_PARAMS}) --unmerge ${CRAFT_BUILD_BLUEPRINT} (-split ${CRAFT_REBUILD_BLUEPRINT})
+    - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --target ${CRAFT_PLATFORM} -c (-split ${CRAFT_OPTIONS}) (-split ${CRAFT_PROJECT_PARAMS}) --unmerge ${CRAFT_BUILD_BLUEPRINT} (-split ${CRAFT_REBUILD_BLUEPRINT})
   script:
     - cd "$CRAFT_BASE"
     # Ask Craftmaster to ensure all the dependencies are installed for this application we are going to be building
-    - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --config-override CI-Craft-Deploy-Config.ini --target ${CRAFT_PLATFORM} -c (-split ${CRAFT_OPTIONS}) (-split ${CRAFT_PROJECT_PARAMS}) --install-deps ${CRAFT_BUILD_BLUEPRINT}
+    - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --target ${CRAFT_PLATFORM} -c (-split ${CRAFT_OPTIONS}) (-split ${CRAFT_PROJECT_PARAMS}) --install-deps ${CRAFT_BUILD_BLUEPRINT}
     # Actually build the application now
-    - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --config-override CI-Craft-Deploy-Config.ini --target ${CRAFT_PLATFORM} -c (-split ${CRAFT_OPTIONS}) --no-cache (-split ${CRAFT_PROJECT_PARAMS}) --src-dir ${CI_PROJECT_DIR} -vv ${CRAFT_BUILD_BLUEPRINT} (-split ${CRAFT_REBUILD_BLUEPRINT})
+    - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --target ${CRAFT_PLATFORM} -c (-split ${CRAFT_OPTIONS}) --no-cache (-split ${CRAFT_PROJECT_PARAMS}) --src-dir ${CI_PROJECT_DIR} -vv ${CRAFT_BUILD_BLUEPRINT} (-split ${CRAFT_REBUILD_BLUEPRINT})
   after_script:
     # Ensure gpg-agent and dbus-daemon are no longer around
     # For reasons unknown, these processes somehow end up running within the Binary Factory environment
@@ -44,7 +44,7 @@
     - taskkill /F /IM gpg-agent.exe; $null
     - taskkill /F /IM dbus-daemon.exe; $null
     - cd "$CRAFT_BASE"
-    - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --config-override CI-Craft-Deploy-Config.ini --target ${CRAFT_PLATFORM} -c (-split ${CRAFT_OPTIONS}) --clean-unused
+    - python craftmaster/Craftmaster.py --config "${CRAFTMASTER_CONFIG}" --target ${CRAFT_PLATFORM} -c (-split ${CRAFT_OPTIONS}) --clean-unused
   when: manual
 
 # Nightly win64 craft build of Kate
