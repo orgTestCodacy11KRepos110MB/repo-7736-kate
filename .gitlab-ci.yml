@@ -120,5 +120,7 @@ craft_playground:
     - Get-ChildItem C:\Gitlab\Craft\ | Remove-Item -Recurse -Force
     - git clone https://invent.kde.org/packaging/craftmaster --branch=master
     - git clone https://invent.kde.org/sysadmin/ci-utilities
+    # Get Craft itself ready
+    - python craftmaster/CraftMaster.py --config $env:KDECI_CRAFT_CONFIG --target $env:KDECI_CRAFT_PLATFORM -c -i --options virtual.ignored=True --update craft
   script:
     - craftmaster/CraftMaster.py --config $env:KDECI_CRAFT_CONFIG --config-override $env:CI_PROJECT_DIR/src/craft.ini --target $env:KDECI_CRAFT_PLATFORM -c --get "packageAppx" $env:CI_PROJECT_NAME
