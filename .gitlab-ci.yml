@@ -123,9 +123,10 @@ craft_playground:
     # Get Craft itself ready
     - python craftmaster/CraftMaster.py --config $env:KDECI_CRAFT_CONFIG --config-override $env:CI_PROJECT_DIR/src/craft.ini --target $env:KDECI_CRAFT_PLATFORM -c -i --options virtual.ignored=True --update craft
   script:
+    - (Get-ChildItem C:\Gitlab\Craft\ -Recurse -Filter *.ini).FullName
     - echo "etc/BlueprintSettings.ini:"
-    - Get-Content etc/BlueprintSettings.ini
+    - Get-Content $env:KDECI_CRAFT_PLATFORM/etc/BlueprintSettings.ini
     - echo "etc/CraftSettings.ini:"
-    - Get-Content etc/CraftSettings.ini
+    - Get-Content $env:KDECI_CRAFT_PLATFORM/etc/CraftSettings.ini
     - craftmaster/CraftMaster.py --config $env:KDECI_CRAFT_CONFIG --config-override $env:CI_PROJECT_DIR/src/craft.ini --target $env:KDECI_CRAFT_PLATFORM -c -vv --get "fullPlasma" $env:CI_PROJECT_NAME
     - craftmaster/CraftMaster.py --config $env:KDECI_CRAFT_CONFIG --config-override $env:CI_PROJECT_DIR/src/craft.ini --target $env:KDECI_CRAFT_PLATFORM -c --get "packageAppx" $env:CI_PROJECT_NAME
