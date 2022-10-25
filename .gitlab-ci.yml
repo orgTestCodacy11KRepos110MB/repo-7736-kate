@@ -128,5 +128,7 @@ craft_playground:
     - Get-Content $env:KDECI_CRAFT_PLATFORM/etc/BlueprintSettings.ini
     - echo "etc/CraftSettings.ini:"
     - Get-Content $env:KDECI_CRAFT_PLATFORM/etc/CraftSettings.ini
-    - craftmaster/CraftMaster.py --config $env:KDECI_CRAFT_CONFIG --config-override $env:CI_PROJECT_DIR/src/craft.ini --target $env:KDECI_CRAFT_PLATFORM -c -vv --get subinfo.options.dynamic.fullPlasma $env:CI_PROJECT_NAME
-    - craftmaster/CraftMaster.py --config $env:KDECI_CRAFT_CONFIG --config-override $env:CI_PROJECT_DIR/src/craft.ini --target $env:KDECI_CRAFT_PLATFORM -c --get "packageAppx" $env:CI_PROJECT_NAME
+    - craftmaster/CraftMaster.py --config $env:KDECI_CRAFT_CONFIG --config-override $env:CI_PROJECT_DIR/src/craft.ini --target $env:KDECI_CRAFT_PLATFORM -c --get subinfo.options.dynamic.fullPlasma $env:CI_PROJECT_NAME
+    - craftmaster/CraftMaster.py --config $env:KDECI_CRAFT_CONFIG --config-override $env:CI_PROJECT_DIR/src/craft.ini --target $env:KDECI_CRAFT_PLATFORM -c --get subinfo.options.dynamic.version $env:CI_PROJECT_NAME
+    - craftmaster/CraftMaster.py --config $env:KDECI_CRAFT_CONFIG --config-override $env:CI_PROJECT_DIR/src/craft.ini --target $env:KDECI_CRAFT_PLATFORM -c --get subinfo.options.dynamic.ignored $env:CI_PROJECT_NAME
+    - craftmaster/CraftMaster.py --config $env:KDECI_CRAFT_CONFIG --config-override $env:CI_PROJECT_DIR/src/craft.ini --target $env:KDECI_CRAFT_PLATFORM -c --get subinfo.options.dynamic.packageAppx $env:CI_PROJECT_NAME
