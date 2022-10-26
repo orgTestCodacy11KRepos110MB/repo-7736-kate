@@ -126,4 +126,6 @@ craft_playground:
     # Get Craft itself ready
     - python craftmaster/CraftMaster.py --config $env:KDECI_CRAFT_CONFIG --config-override $env:KDECI_CRAFT_PROJECT_CONFIG --target $env:KDECI_CRAFT_PLATFORM -c -i --options virtual.ignored=True --update craft
   script:
-    - craftmaster/CraftMaster.py --config $env:KDECI_CRAFT_CONFIG --config-override $env:KDECI_CRAFT_PROJECT_CONFIG --target $env:KDECI_CRAFT_PLATFORM -c --get subinfo.options.dynamic.packageAppx $env:CI_PROJECT_NAME
+    - $packageAppx = craftmaster/CraftMaster.py --config $env:KDECI_CRAFT_CONFIG --config-override $env:KDECI_CRAFT_PROJECT_CONFIG --target $env:KDECI_CRAFT_PLATFORM -c --get subinfo.options.dynamic.packageAppx $env:CI_PROJECT_NAME
+    - echo $packageAppx
+    - if ($packageAppx -eq "True") { echo "Package as AppX" } else { echo "Skip packaging as AppX" }
