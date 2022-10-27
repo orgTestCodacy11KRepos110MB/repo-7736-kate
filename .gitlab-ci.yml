@@ -99,8 +99,9 @@ craft_windows_x86_64:
   artifacts:
     expire_in: 3 days
     when: on_success
+    expose_as: "Windows"
     paths:
-     - ".kde-ci-packages/*"
+     - ".kde-ci-packages/"
 
 craft_playground:
   stage: deploy
