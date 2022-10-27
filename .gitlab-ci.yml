@@ -66,11 +66,11 @@ craft_windows_x86_64:
     KDECI_CRAFT_PLATFORM: windows-msvc2019_64-cl
     KDECI_CRAFT_CACHE: C:/Gitlab/Craft/download/
     KDECI_CRAFT_CONFIG: ci-utilities/resources/CraftConfig.ini
-    KDECI_CRAFT_PROJECT_CONFIG: $CI_PROJECT_DIR/src/craft.ini
+    KDECI_CRAFT_PROJECT_CONFIG: $CI_PROJECT_DIR/src/.craft.ini
   interruptible: true
   before_script:
     - git clone $env:CI_REPOSITORY_URL --branch=$env:CI_COMMIT_REF_NAME src/
-    # Create empty craft.ini if none exists
+    # Create empty .craft.ini if none exists
     - if (!(Test-Path $env:KDECI_CRAFT_PROJECT_CONFIG)) { New-Item $env:KDECI_CRAFT_PROJECT_CONFIG -ItemType file }
     - cd C:\Gitlab\Craft\
     - Get-ChildItem C:\Gitlab\Craft\ | Remove-Item -Recurse -Force
@@ -87,7 +87,7 @@ craft_windows_x86_64:
     - python craftmaster/CraftMaster.py --config $env:KDECI_CRAFT_CONFIG --config-override $env:KDECI_CRAFT_PROJECT_CONFIG --target $env:KDECI_CRAFT_PLATFORM -c -i --update nsis
     # Package it up!
     - python craftmaster/CraftMaster.py --config $env:KDECI_CRAFT_CONFIG --config-override $env:KDECI_CRAFT_PROJECT_CONFIG --target $env:KDECI_CRAFT_PLATFORM -c --package --target master --src-dir $env:CI_PROJECT_DIR/src/ $env:CI_PROJECT_NAME
-    - $packageAppx = craftmaster/CraftMaster.py --config $env:KDECI_CRAFT_CONFIG --config-override $env:KDECI_CRAFT_PROJECT_CONFIG --target $env:KDECI_CRAFT_PLATFORM -c --get subinfo.options.dynamic.packageAppx $env:CI_PROJECT_NAME
+    - $packageAppx = python craftmaster/CraftMaster.py --config $env:KDECI_CRAFT_CONFIG --config-override $env:KDECI_CRAFT_PROJECT_CONFIG --target $env:KDECI_CRAFT_PLATFORM -c --get subinfo.options.dynamic.packageAppx $env:CI_PROJECT_NAME
     - if ($packageAppx -eq "True") { python craftmaster/Craftmaster.py --config $env:KDECI_CRAFT_CONFIG --config-override $env:KDECI_CRAFT_PROJECT_CONFIG --target $env:KDECI_CRAFT_PLATFORM -c --package --options "[Packager]PackageType=AppxPackager" --target master --src-dir $env:CI_PROJECT_DIR/src/ $env:CI_PROJECT_NAME }
     # Save our package
     - $packageDir=python craftmaster/CraftMaster.py --config $env:KDECI_CRAFT_CONFIG --config-override $env:KDECI_CRAFT_PROJECT_CONFIG --target $env:KDECI_CRAFT_PLATFORM -c -q --get "packageDestinationDir()" virtual/base
