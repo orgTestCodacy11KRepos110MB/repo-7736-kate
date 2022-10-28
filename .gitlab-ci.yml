@@ -120,7 +120,7 @@ craft_playground:
   before_script:
     - git clone $env:CI_REPOSITORY_URL --branch=$env:CI_COMMIT_REF_NAME src/
     # Create empty .craft.ini if none exists
-    - New-Item $env:KDECI_CRAFT_PROJECT_CONFIG -ItemType file -ErrorAction SilentlyContinue
+    - if (!(Test-Path $env:KDECI_CRAFT_PROJECT_CONFIG)) { New-Item $env:KDECI_CRAFT_PROJECT_CONFIG -ItemType file }
     - cd C:\Gitlab\Craft\
     - Get-ChildItem C:\Gitlab\Craft\ | Remove-Item -Recurse -Force
     - git clone https://invent.kde.org/packaging/craftmaster --branch=master
