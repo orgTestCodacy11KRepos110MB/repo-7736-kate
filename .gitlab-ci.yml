@@ -11,6 +11,10 @@ include:
     ref: work/kloecker/craft-appimage
     file:
       - /gitlab-templates/craft-appimage.yml
+  - project: sysadmin/ci-utilities
+    ref: work/kloecker/craft-windows
+    file:
+      - /gitlab-templates/craft-windows-x86-64.yml
 
 
 .craft_build_windows_qt515:
@@ -56,56 +60,6 @@ craft_nightly_windows_qt515:
   extends: .craft_build_windows_qt515
   variables:
     CRAFT_BUILD_TYPE: Nightly
-
-craft_windows_x86_64:
-  stage: deploy
-  when: manual
-  image: kdeorg/windows-msvc2019-qt515:latest
-  #needs: ["windows_qt515"]
-  tags:
-    - Windows
-  variables:
-    PYTHONUTF8: 1
-    GIT_STRATEGY: none
-    KDECI_CRAFT_PLATFORM: windows-msvc2019_64-cl
-    KDECI_CRAFT_CACHE: C:/Gitlab/Craft/download/
-    KDECI_CRAFT_CONFIG: ci-utilities/resources/CraftConfig.ini
-    KDECI_CRAFT_PROJECT_CONFIG: $CI_PROJECT_DIR/src/.craft.ini
-  interruptible: true
-  before_script:
-    - git clone $env:CI_REPOSITORY_URL --branch=$env:CI_COMMIT_REF_NAME src/
-    # Create empty .craft.ini if none exists
-    - if (!(Test-Path $env:KDECI_CRAFT_PROJECT_CONFIG)) { New-Item $env:KDECI_CRAFT_PROJECT_CONFIG -ItemType file }
-    - cd C:\Gitlab\Craft\
-    - Get-ChildItem C:\Gitlab\Craft\ | Remove-Item -Recurse -Force
-    - git clone https://invent.kde.org/packaging/craftmaster --branch=master
-    - git clone https://invent.kde.org/sysadmin/ci-utilities
-  script:
-    # Get Craft itself ready
-    - python craftmaster/CraftMaster.py --config $env:KDECI_CRAFT_CONFIG --config-override $env:KDECI_CRAFT_PROJECT_CONFIG --target $env:KDECI_CRAFT_PLATFORM -c -i --options virtual.ignored=True --update craft
-    # Install all of our dependencies
-    - python craftmaster/CraftMaster.py --config $env:KDECI_CRAFT_CONFIG --config-override $env:KDECI_CRAFT_PROJECT_CONFIG --target $env:KDECI_CRAFT_PLATFORM -c --install-deps $env:CI_PROJECT_NAME
-    # Build the actual application
-    - python craftmaster/CraftMaster.py --config $env:KDECI_CRAFT_CONFIG --config-override $env:KDECI_CRAFT_PROJECT_CONFIG --target $env:KDECI_CRAFT_PLATFORM -c --no-cache --target master --src-dir $env:CI_PROJECT_DIR/src/ $env:CI_PROJECT_NAME
-    # Ensure the tools needed to conduct packaging are installed
-    - python craftmaster/CraftMaster.py --config $env:KDECI_CRAFT_CONFIG --config-override $env:KDECI_CRAFT_PROJECT_CONFIG --target $env:KDECI_CRAFT_PLATFORM -c -i --update nsis
-    # Package it up!
-    - python craftmaster/CraftMaster.py --config $env:KDECI_CRAFT_CONFIG --config-override $env:KDECI_CRAFT_PROJECT_CONFIG --target $env:KDECI_CRAFT_PLATFORM -c --package --target master --src-dir $env:CI_PROJECT_DIR/src/ $env:CI_PROJECT_NAME
-    - $packageAppx = python craftmaster/CraftMaster.py --config $env:KDECI_CRAFT_CONFIG --config-override $env:KDECI_CRAFT_PROJECT_CONFIG --target $env:KDECI_CRAFT_PLATFORM -c --get subinfo.options.dynamic.packageAppx $env:CI_PROJECT_NAME
-    - if ($packageAppx -eq "True") { python craftmaster/Craftmaster.py --config $env:KDECI_CRAFT_CONFIG --config-override $env:KDECI_CRAFT_PROJECT_CONFIG --target $env:KDECI_CRAFT_PLATFORM -c --package --options "[Packager]PackageType=AppxPackager" --target master --src-dir $env:CI_PROJECT_DIR/src/ $env:CI_PROJECT_NAME }
-    # Save our package
-    - $packageDir=python craftmaster/CraftMaster.py --config $env:KDECI_CRAFT_CONFIG --config-override $env:KDECI_CRAFT_PROJECT_CONFIG --target $env:KDECI_CRAFT_PLATFORM -c -q --get "packageDestinationDir()" virtual/base
-    - mkdir $env:CI_PROJECT_DIR/.kde-ci-packages
-    - cd $env:CI_PROJECT_DIR/.kde-ci-packages
-    - Get-ChildItem -Path $packageDir -Recurse -Include *.appx, *.appxupload, *.exe, *.7z, *.sha256 | Copy-Item
-    - echo "Copied files:"
-    - (Get-ChildItem -Recurse).FullName
-  artifacts:
-    expire_in: 3 days
-    when: on_success
-    expose_as: "Windows"
-    paths:
-     - ".kde-ci-packages/"
 
 craft_playground:
   stage: deploy
