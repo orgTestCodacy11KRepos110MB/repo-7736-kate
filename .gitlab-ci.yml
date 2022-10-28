@@ -111,4 +111,6 @@ craft_appimage_playground:
     # Which shell are we using?
     - echo $0
     - locale
+    - export LANG=en_US.UTF-8
+    - locale
     - python3 -c 'print("Ingo Klöcker")'
