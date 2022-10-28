@@ -91,3 +91,24 @@ craft_playground:
     - $packageAppx = Run-CraftMaster -c --get subinfo.options.dynamic.packageAppx $env:CI_PROJECT_NAME
     - echo $packageAppx
     - if ($packageAppx -eq "True") { echo "Package as AppX" } else { echo "Skip packaging as AppX" }
+
+craft_appimage_playground:
+  stage: deploy
+  when: manual
+  image: kdeorg/centos7-craft:latest
+  #needs: ["suse_tumbleweed_qt515"]
+  tags:
+    - Linux
+  variables:
+    PYTHONUTF8: 1
+    GIT_STRATEGY: none
+    KDECI_CRAFT_PLATFORM: linux-64-gcc
+    KDECI_CRAFT_CACHE: /mnt/craft-cache/$KDECI_CRAFT_PLATFORM/
+    KDECI_CRAFT_CONFIG: ci-utilities/resources/CraftConfig.ini
+    KDECI_CRAFT_PROJECT_CONFIG: $CI_PROJECT_DIR/src/.craft.ini
+  interruptible: true
+  script:
+    # Which shell are we using?
+    - echo $0
+    - locale
+    - python3 -c 'print("Ingo Klöcker")'
