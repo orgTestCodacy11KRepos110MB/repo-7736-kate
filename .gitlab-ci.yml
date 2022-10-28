@@ -115,11 +115,11 @@ craft_playground:
     KDECI_CRAFT_PLATFORM: windows-msvc2019_64-cl
     KDECI_CRAFT_CACHE: C:/Gitlab/Craft/download/
     KDECI_CRAFT_CONFIG: ci-utilities/resources/CraftConfig.ini
-    KDECI_CRAFT_PROJECT_CONFIG: $CI_PROJECT_DIR/src/craft.ini
+    KDECI_CRAFT_PROJECT_CONFIG: $CI_PROJECT_DIR/src/.craft.ini
   interruptible: true
   before_script:
     - git clone $env:CI_REPOSITORY_URL --branch=$env:CI_COMMIT_REF_NAME src/
-    # Create empty craft.ini if none exists
+    # Create empty .craft.ini if none exists
     - New-Item $env:KDECI_CRAFT_PROJECT_CONFIG -ItemType file -ErrorAction SilentlyContinue
     - cd C:\Gitlab\Craft\
     - Get-ChildItem C:\Gitlab\Craft\ | Remove-Item -Recurse -Force
