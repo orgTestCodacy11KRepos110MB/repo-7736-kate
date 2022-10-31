@@ -12,7 +12,7 @@ include:
     file:
       - /gitlab-templates/craft-appimage.yml
   - project: sysadmin/ci-utilities
-    ref: work/kloecker/craft-windows
+    ref: master
     file:
       - /gitlab-templates/craft-windows-x86-64.yml
 
