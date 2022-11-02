@@ -77,7 +77,6 @@ public Q_SLOTS:
     {
         setDir(QUrl(url));
     }
-    static void selectorViewChanged(QAbstractItemView *);
 
 private Q_SLOTS:
     void fileSelected(const KFileItem & /*file*/);

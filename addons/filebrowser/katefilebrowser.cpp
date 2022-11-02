@@ -95,7 +95,6 @@ KateFileBrowser::KateFileBrowser(KTextEditor::MainWindow *mainWindow, QWidget *p
     m_dirOperator->setNewFileMenuSupportedMimeTypes(filter);
 
     setFocusProxy(m_dirOperator);
-    connect(m_dirOperator, &KDirOperator::viewChanged, this, &KateFileBrowser::selectorViewChanged);
     connect(m_urlNavigator, &KUrlNavigator::returnPressed, m_dirOperator, static_cast<void (KDirOperator::*)()>(&KDirOperator::setFocus));
 
     // now all actions exist in dir operator and we can use them in the toolbar
@@ -410,11 +409,6 @@ void KateFileBrowser::autoSyncFolder()
     if (m_autoSyncFolder->isChecked()) {
         setActiveDocumentDir();
     }
-}
-
-void KateFileBrowser::selectorViewChanged(QAbstractItemView *newView)
-{
-    newView->setSelectionMode(QAbstractItemView::ExtendedSelection);
 }
 
 // END Private Slots
