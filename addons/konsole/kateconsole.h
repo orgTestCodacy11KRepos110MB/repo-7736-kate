@@ -74,6 +74,11 @@ public:
      */
     ~KateKonsolePluginView() override;
 
+    /**
+     * Returns the action collection of the konsole part
+     */
+    [[nodiscard]] Q_INVOKABLE KActionCollection *partActionCollection();
+
     void readConfig();
 
 private:
@@ -104,6 +109,11 @@ public:
     ~KateConsole() override;
 
     void readConfig();
+
+    /**
+     * Returns the actionCollection of the konsole part
+     */
+    [[nodiscard]] KActionCollection *partActionCollection();
 
     /**
      * cd to dir
@@ -195,6 +205,11 @@ protected:
     void showEvent(QShowEvent *ev) override;
 
 private:
+    /**
+     * construct konsole part if needed
+     */
+    void loadPart();
+
     /**
      * console part
      */

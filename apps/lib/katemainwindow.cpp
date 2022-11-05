@@ -935,6 +935,15 @@ void KateMainWindow::editKeys()
         //     qCDebug(LOG_KATE)<<client->componentData().aboutData()->programName();
         dlg.addCollection(client->actionCollection(), client->componentName());
     }
+
+    if (QObject *konsolePluginView = pluginView(QStringLiteral("katekonsoleplugin"))) {
+        KActionCollection *konsolePartActions = nullptr;
+        QMetaObject::invokeMethod(konsolePluginView, "partActionCollection", Q_RETURN_ARG(KActionCollection *, konsolePartActions));
+        if (konsolePartActions) {
+            dlg.addCollection(konsolePartActions, QStringLiteral("konsolepart"));
+        }
+    }
+
     dlg.configure();
 
     // reloadXML gui clients, to ensure all clients are up-to-date

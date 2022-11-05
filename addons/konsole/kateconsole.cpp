@@ -36,10 +36,12 @@
 #include <QTabWidget>
 #include <QVBoxLayout>
 
+#include <KActionCollection>
 #include <KAuthorized>
 #include <KConfigGroup>
 #include <KPluginFactory>
 #include <KSharedConfig>
+#include <KXMLGUIBuilder>
 #include <KXMLGUIFactory>
 
 K_PLUGIN_FACTORY_WITH_JSON(KateKonsolePluginFactory, "katekonsoleplugin.json", registerPlugin<KateKonsolePlugin>();)
@@ -117,6 +119,11 @@ KateKonsolePluginView::~KateKonsolePluginView()
     delete toolview;
 }
 
+KActionCollection *KateKonsolePluginView::partActionCollection()
+{
+    return m_console->partActionCollection();
+}
+
 void KateKonsolePluginView::readConfig()
 {
     m_console->readConfig();
@@ -181,9 +188,32 @@ KateConsole::~KateConsole()
     }
 }
 
-void KateConsole::loadConsoleIfNeeded()
+void KateConsole::loadPart()
 {
     if (m_part) {
+        return;
+    }
+
+    /**
+     * get konsole part factory
+     */
+    KPluginFactory *pluginFactory = KPluginFactory::loadFactory(QStringLiteral("konsolepart")).plugin;
+    if (!pluginFactory) {
+        return;
+    }
+
+    m_part = pluginFactory->create<KParts::ReadOnlyPart>(this);
+
+    if (!m_part) {
+        return;
+    }
+}
+
+void KateConsole::loadConsoleIfNeeded()
+{
+    loadPart();
+
+    if (!m_part) {
         return;
     }
 
@@ -191,20 +221,6 @@ void KateConsole::loadConsoleIfNeeded()
         return;
     }
     if (!window() || !isVisibleTo(window())) {
-        return;
-    }
-
-    /**
-     * get konsole part factory
-     */
-    KPluginFactory *factory = KPluginFactory::loadFactory(QStringLiteral("konsolepart")).plugin;
-    if (!factory) {
-        return;
-    }
-
-    m_part = factory->create<KParts::ReadOnlyPart>(this);
-
-    if (!m_part) {
         return;
     }
 
@@ -249,6 +265,13 @@ bool KateConsole::eventFilter(QObject *w, QEvent *e)
     }
 
     return QWidget::eventFilter(w, e);
+}
+
+KActionCollection *KateConsole::partActionCollection()
+{
+    loadPart();
+
+    return m_part->actionCollection();
 }
 
 void KateConsole::slotDestroyed()
