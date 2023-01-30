@@ -101,6 +101,8 @@ private:
     enum class MatchType { NoMatch, HasMatch, InvalidRegExp };
 
 private Q_SLOTS:
+    void onGlobalFocusChanged(QWidget *old, QWidget *now);
+
     void openSearchView();
     void handleEsc(QEvent *e);
     void nextFocus(QWidget *currentWidget, bool *found, bool next);
@@ -223,6 +225,10 @@ private:
      * our main window
      */
     KTextEditor::MainWindow *m_mainWindow;
+
+    // Actions that are added to actionCollection
+    // We use this list to enable disable them on focus changes
+    std::array<QAction *, 5> m_pluginActions;
 };
 
 // kate: space-indent on; indent-width 4; replace-tabs on;

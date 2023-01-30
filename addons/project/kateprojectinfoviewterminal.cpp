@@ -24,20 +24,6 @@
 
 KPluginFactory *KateProjectInfoViewTerminal::s_pluginFactory = nullptr;
 
-static QAction *actionFromPlugin(KTextEditor::MainWindow *mainWindow, const QString &pluginName, const QString &actionName)
-{
-    auto f = mainWindow->guiFactory();
-    if (f) {
-        const auto clients = f->clients();
-        for (auto *c : clients) {
-            if (c && c->componentName() == pluginName) {
-                return c->actionCollection()->action(actionName);
-            }
-        }
-    }
-    return nullptr;
-}
-
 KateProjectInfoViewTerminal::KateProjectInfoViewTerminal(KateProjectPluginView *pluginView, const QString &directory)
     : m_pluginView(pluginView)
     , m_directory(directory)
@@ -51,8 +37,6 @@ KateProjectInfoViewTerminal::KateProjectInfoViewTerminal(KateProjectPluginView *
     m_layout->setContentsMargins(0, 0, 0, 0);
 
     m_showProjectInfoViewAction = Utils::toolviewShowAction(m_pluginView->mainWindow(), QStringLiteral("kateprojectinfo"));
-
-    m_searchInFilesAction = actionFromPlugin(pluginView->mainWindow(), QStringLiteral("katesearch"), QStringLiteral("search_in_files"));
 }
 
 KateProjectInfoViewTerminal::~KateProjectInfoViewTerminal()
@@ -80,9 +64,6 @@ void KateProjectInfoViewTerminal::showEvent(QShowEvent *)
      */
     if (!m_konsolePart) {
         loadTerminal();
-    }
-    if (m_searchInFilesAction && hasFocus()) {
-        m_searchInFilesAction->setEnabled(false);
     }
 }
 
@@ -199,16 +180,6 @@ bool KateProjectInfoViewTerminal::eventFilter(QObject *w, QEvent *e)
 {
     if (!m_konsolePart) {
         return QWidget::eventFilter(w, e);
-    }
-
-    // Disable search in files action as it clashes with konsole's search shortcut
-    // with default shortcuts
-    if (m_searchInFilesAction) {
-        if (e->type() == QEvent::Enter) {
-            m_searchInFilesAction->setEnabled(false);
-        } else if (e->type() == QEvent::Leave) {
-            m_searchInFilesAction->setEnabled(true);
-        }
     }
 
     if (e->type() == QEvent::KeyPress || e->type() == QEvent::ShortcutOverride) {

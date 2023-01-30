@@ -336,17 +336,20 @@ KatePluginSearchView::KatePluginSearchView(KTextEditor::Plugin *plugin, KTextEdi
     a->setText(i18n("Find in Files"));
     a->setIcon(QIcon::fromTheme(QStringLiteral("edit-find")));
     connect(a, &QAction::triggered, this, &KatePluginSearchView::openSearchView);
+    m_pluginActions[0] = a;
 
     a = actionCollection()->addAction(QStringLiteral("search_in_files_new_tab"));
     a->setText(i18n("Find in Files (in a New Tab)"));
     // first add tab, then open search view, since open search view switches to show the search options
     connect(a, &QAction::triggered, this, &KatePluginSearchView::addTab);
     connect(a, &QAction::triggered, this, &KatePluginSearchView::openSearchView);
+    m_pluginActions[1] = a;
 
     a = actionCollection()->addAction(QStringLiteral("go_to_next_match"));
     a->setText(i18n("Go to Next Match"));
     actionCollection()->setDefaultShortcut(a, QKeySequence(Qt::Key_F6));
     connect(a, &QAction::triggered, this, &KatePluginSearchView::goToNextMatch);
+    m_pluginActions[2] = a;
 
     a = actionCollection()->addAction(QStringLiteral("go_to_prev_match"));
     a->setText(i18n("Go to Previous Match"));
@@ -358,12 +361,14 @@ KatePluginSearchView::KatePluginSearchView(KTextEditor::Plugin *plugin, KTextEdi
     a->setIcon(QIcon::fromTheme(QStringLiteral("edit-cut")));
     a->setWhatsThis(i18n("This will cut all highlighted search match lines from the current document to the clipboard"));
     connect(a, &QAction::triggered, this, &KatePluginSearchView::cutSearchedLines);
+    m_pluginActions[3] = a;
 
     a = actionCollection()->addAction(QStringLiteral("copy_searched_lines"));
     a->setText(i18n("Copy Matching Lines"));
     a->setIcon(QIcon::fromTheme(QStringLiteral("edit-copy")));
     a->setWhatsThis(i18n("This will copy all highlighted search match lines in the current document to the clipboard"));
     connect(a, &QAction::triggered, this, &KatePluginSearchView::copySearchedLines);
+    m_pluginActions[4] = a;
 
     // Only show the tab bar when there is more than one tab
     KAcceleratorManager::setNoAccel(m_ui.resultWidget);
@@ -567,6 +572,8 @@ KatePluginSearchView::KatePluginSearchView(KTextEditor::Plugin *plugin, KTextEdi
 
     m_mainWindow->guiFactory()->addClient(this);
 
+    connect(qApp, &QApplication::focusChanged, this, &KatePluginSearchView::onGlobalFocusChanged);
+
     auto e = KTextEditor::Editor::instance();
     connect(e, &KTextEditor::Editor::configChanged, this, &KatePluginSearchView::updateViewColors);
     updateViewColors();
@@ -578,6 +585,27 @@ KatePluginSearchView::~KatePluginSearchView()
     clearMarksAndRanges();
     m_mainWindow->guiFactory()->removeClient(this);
     delete m_toolView;
+}
+
+void KatePluginSearchView::onGlobalFocusChanged(QWidget *, QWidget *now)
+{
+    auto enableAll = [](const auto &acts, bool enable) {
+        for (auto a : acts) {
+            a->setEnabled(enable);
+        }
+    };
+
+    auto av = m_mainWindow->activeView();
+    // ActiveView might not be set yet
+    if ((av && av->focusProxy() == now) || (now && qstrcmp(now->metaObject()->className(), "KateViewInternal") == 0)) {
+        // If focus belongs to KTextEditor::View we enable
+        enableAll(m_pluginActions, true);
+    } else if (now && m_toolView->isAncestorOf(now)) {
+        // If focus belongs to one of our childs => enable
+        enableAll(m_pluginActions, true);
+    } else {
+        enableAll(m_pluginActions, false);
+    }
 }
 
 QVector<int> KatePluginSearchView::getDocumentSearchMarkedLines(KTextEditor::Document *currentDocument)
